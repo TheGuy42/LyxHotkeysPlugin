@@ -272,22 +272,37 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log(`🎨 formatKeyForDisplay: key="${key}", isMac=${isMac}, macMMapping=${macMMapping}`);
     
+    // Check if this is a sequence (contains space)
+    const isSequence = key.includes(' ');
+    
+    if (isSequence) {
+      // Handle sequences - format each part separately and join with arrows
+      const parts = key.split(' ');
+      const formattedParts = parts.map(part => formatSingleKey(part, isMac, macMMapping));
+      return formattedParts.join(' → ');
+    } else {
+      // Handle single key combination
+      return formatSingleKey(key, isMac, macMMapping);
+    }
+  }
+
+  function formatSingleKey(key, isMac, macMMapping) {
     // Convert to Mac-style display based on user preference
     let formatted;
     if (macMMapping === 'meta') {
       // User chose to map M- to Command, show meta+ as ⌘
       formatted = key
-        .replace(/ctrl\+/gi, '⌃ ')  // Regular Ctrl keys
-        .replace(/meta\+/gi, '⌘ ')  // M- keys mapped to Command  
-        .replace(/alt\+/gi, '⌥ ')
-        .replace(/shift\+/gi, '⇧ ');
+        .replace(/ctrl\+/gi, '⌃')  // Regular Ctrl keys (no space for simultaneous)
+        .replace(/meta\+/gi, '⌘')  // M- keys mapped to Command  
+        .replace(/alt\+/gi, '⌥')
+        .replace(/shift\+/gi, '⇧');
     } else {
       // User chose to map M- to Ctrl (default), show both ctrl+ and meta+ as ⌃
       formatted = key
-        .replace(/ctrl\+/gi, '⌃ ')  // Regular Ctrl keys
-        .replace(/meta\+/gi, '⌃ ')  // M- keys mapped to Ctrl  
-        .replace(/alt\+/gi, '⌥ ')
-        .replace(/shift\+/gi, '⇧ ');
+        .replace(/ctrl\+/gi, '⌃')  // Regular Ctrl keys (no space for simultaneous)
+        .replace(/meta\+/gi, '⌃')  // M- keys mapped to Ctrl  
+        .replace(/alt\+/gi, '⌥')
+        .replace(/shift\+/gi, '⇧');
     }
     
     // Clean up arrow keys and special keys - be specific to avoid double replacements
@@ -319,7 +334,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Uppercase the final key only (single letters)
     formatted = formatted.replace(/([a-z])$/i, (match) => match.toUpperCase());
     
-    console.log(`🎨 formatKeyForDisplay result: "${formatted}"`);
     return formatted;
   }
 
