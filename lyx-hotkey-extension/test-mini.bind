@@ -1,0 +1,7 @@
+# Test Mac .bind content - simplified
+\bind "M-b" "char-backward"
+\bind "M-f" "char-forward"
+\bind "M-m" "math-mode"
+\bind "C-b" "font-bold"
+\bind "C-M-b" "font-boldsymbol"
+\bind "A-g" "command-sequence math-mode; self-insert \\alpha;"

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>LyX Extension Debug</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #00ff00;
+    }
+    .debug-output {
+      background: #000;
+      border: 1px solid #333;
+      padding: 15px;
+      margin: 10px 0;
+      white-space: pre-wrap;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      background: #333;
+      color: #fff;
+      border: 1px solid #666;
+    }
+    .key-info {
+      background: #002200;
+      border: 1px solid #004400;
+      padding: 10px;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐛 LyX Extension Key Debug Tool</h1>
+  <p>This page helps debug key detection issues on Mac. Press keys in the input below to see what's detected.</p>
+  
+  <input type="text" id="testInput" placeholder="Press Option+M or other keys here...">
+  <textarea id="testArea" placeholder="Or try keys here..."></textarea>
+  
+  <div class="key-info">
+    <strong>Last Key Event:</strong>
+    <div id="lastKey">No key pressed yet</div>
+  </div>
+  
+  <div class="debug-output" id="debugOutput">Debug output will appear here...\n</div>
+  
+  <script src="debug.js"></script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+# Sample LyX Hotkey Configuration for Chrome Extension
+# Based on LyX mac.bind file - simplified for web browser use
+
+# Text formatting
+\bind "C-b" "font-bold"
+\bind "C-e" "font-emph"
+\bind "C-u" "font-underline"
+\bind "C-S-P" "font-typewriter"
+\bind "C-S-O" "font-strikeout"
+
+# Math mode
+\bind "C-m" "math-mode"
+\bind "C-S-M" "math-display"
+
+# LaTeX commands
+\bind "C-l" "ert-insert"
+
+# Navigation
+\bind "M-f" "char-forward"
+\bind "M-b" "char-backward"
+\bind "M-e" "line-end"
+\bind "M-n" "down"
+\bind "A-Right" "word-right"
+\bind "A-Left" "word-left"
+\bind "C-Right" "line-end"
+\bind "C-Left" "line-begin"
+\bind "C-Up" "buffer-begin"
+\bind "C-Down" "buffer-end"
+
+# Selection
+\bind "S-Right" "char-right-select"
+\bind "S-Left" "char-left-select"
+\bind "S-A-Right" "word-right-select"
+\bind "S-A-Left" "word-left-select"
+\bind "S-C-Right" "line-end-select"
+\bind "S-C-Left" "line-begin-select"
+\bind "S-C-Up" "buffer-begin-select"
+\bind "S-C-Down" "buffer-end-select"
+
+# Deletion
+\bind "M-d" "char-delete-forward"
+\bind "M-h" "char-delete-backward"
+\bind "A-Delete" "word-delete-forward"
+\bind "A-BackSpace" "word-delete-backward"
+\bind "C-k" "line-delete-forward"
+
+# Special characters and insertions
+\bind "A-space" "space-insert protected"
+\bind "C-period" "specialchar-insert end-of-sentence"
+\bind "M-period" "specialchar-insert dots"
+\bind "M-Return" "paragraph-break inverse"
+\bind "C-Return" "newline-insert newline"
+
+# Quotes
+\bind "~S-M-quotedbl" "quote-insert inner"
+\bind "~S-C-quotedbl" "quote-insert outer auto plain"
+
+# Math symbols (Greek letters)
+\bind "A-g" "math-insert \\alpha"
+\bind "A-b" "math-insert \\beta"
+\bind "A-d" "math-insert \\delta"
+\bind "A-l" "math-insert \\lambda"
+\bind "A-m" "math-insert \\mu"
+\bind "A-p" "math-insert \\pi"
+\bind "A-s" "math-insert \\sigma"
+\bind "A-t" "math-insert \\theta"
+
+# Math functions (common LaTeX)
+\bind "C-S-F" "math-insert \\frac{}{}"
+\bind "C-S-R" "math-insert \\sqrt{}"
+\bind "C-S-I" "math-insert \\int_{}^{}"
+
+# Clipboard operations
+\bind "C-c" "copy"
+\bind "C-v" "paste"
+\bind "C-x" "cut"
+
+# Undo/Redo
+\bind "C-z" "undo"
+\bind "C-S-Z" "redo"

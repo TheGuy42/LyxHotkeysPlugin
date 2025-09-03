@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Mac Key Display</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        .key { font-family: Monaco, monospace; background: #f0f0f0; padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>Mac Key Display Test</h1>
+    
+    <h2>Test 1: Meta mapping to Command</h2>
+    <button onclick="testMetaMapping()">Test Meta → Command</button>
+    <div id="metaResult"></div>
+    
+    <h2>Test 2: Meta mapping to Ctrl (default)</h2>
+    <button onclick="testCtrlMapping()">Test Meta → Ctrl</button>
+    <div id="ctrlResult"></div>
+    
+    <script>
+        function formatKeyForDisplay(key, isMac, macMMapping) {
+            if (!isMac) return key;
+            
+            console.log(`🎨 formatKeyForDisplay: key="${key}", isMac=${isMac}, macMMapping=${macMMapping}`);
+            
+            // Convert to Mac-style display based on user preference
+            let formatted;
+            if (macMMapping === 'meta') {
+                // User chose to map M- to Command, show meta+ as ⌘
+                formatted = key
+                    .replace(/ctrl\+/gi, '⌃ ')  // Regular Ctrl keys
+                    .replace(/meta\+/gi, '⌘ ')  // M- keys mapped to Command  
+                    .replace(/alt\+/gi, '⌥ ')
+                    .replace(/shift\+/gi, '⇧ ');
+            } else {
+                // User chose to map M- to Ctrl (default), show both ctrl+ and meta+ as ⌃
+                formatted = key
+                    .replace(/ctrl\+/gi, '⌃ ')  // Regular Ctrl keys
+                    .replace(/meta\+/gi, '⌃ ')  // M- keys mapped to Ctrl  
+                    .replace(/alt\+/gi, '⌥ ')
+                    .replace(/shift\+/gi, '⇧ ');
+            }
+            
+            // Clean up and format final result - remove trailing + and uppercase
+            formatted = formatted
+                .replace(/\s+$/, '')  // Remove trailing spaces
+                .replace(/\+$/, '')   // Remove trailing +
+                .trim();
+            
+            // Uppercase the final key only (not the symbols)
+            formatted = formatted.replace(/([a-z])$/i, (match) => match.toUpperCase());
+            
+            console.log(`🎨 formatKeyForDisplay result: "${formatted}"`);
+            return formatted;
+        }
+        
+        function testMetaMapping() {
+            const testKeys = [
+                'meta+m',    // Should show ⌘ M
+                'ctrl+b',    // Should show ⌃ B  
+                'meta+shift+m',  // Should show ⇧ ⌘ M
+                'alt+g',     // Should show ⌥ G
+            ];
+            
+            let html = '<div class="test-result"><h3>Meta → Command Results:</h3>';
+            testKeys.forEach(key => {
+                const display = formatKeyForDisplay(key, true, 'meta');
+                html += `<p><code>${key}</code> → <span class="key">${display}</span></p>`;
+            });
+            html += '</div>';
+            
+            document.getElementById('metaResult').innerHTML = html;
+        }
+        
+        function testCtrlMapping() {
+            const testKeys = [
+                'meta+m',    // Should show ⌃ M
+                'ctrl+b',    // Should show ⌃ B  
+                'meta+shift+m',  // Should show ⇧ ⌃ M
+                'alt+g',     // Should show ⌥ G
+            ];
+            
+            let html = '<div class="test-result"><h3>Meta → Ctrl Results:</h3>';
+            testKeys.forEach(key => {
+                const display = formatKeyForDisplay(key, true, 'ctrl');
+                html += `<p><code>${key}</code> → <span class="key">${display}</span></p>`;
+            });
+            html += '</div>';
+            
+            document.getElementById('ctrlResult').innerHTML = html;
+        }
+    </script>
+</body>
+</html>

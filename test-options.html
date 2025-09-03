@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Options</title>
+</head>
+<body>
+    <h1>Test Mac Key Display</h1>
+    <button onclick="testMacDisplay()">Test Mac Display</button>
+    <div id="results"></div>
+    
+    <script>
+        // Mock the chrome.storage API for testing
+        window.chrome = {
+            storage: {
+                local: {
+                    get: function(keys, callback) {
+                        // Mock returning Mac settings
+                        callback({
+                            macMMapping: 'meta',
+                            sequenceTimeout: 1000
+                        });
+                    },
+                    set: function(data, callback) {
+                        console.log('Mock storage set:', data);
+                        if (callback) callback();
+                    }
+                }
+            }
+        };
+        
+        function formatKeyForDisplay(key, isMac) {
+            if (!isMac) return key;
+            
+            console.log(`🔍 formatKeyForDisplay input: "${key}", isMac: ${isMac}`);
+            
+            // Mac-specific formatting
+            let formatted = key
+                .replace(/ctrl\+/gi, '⌃ ')
+                .replace(/meta\+/gi, '⌘ ')
+                .replace(/alt\+/gi, '⌥ ')
+                .replace(/shift\+/gi, '⇧ ')
+                .replace(/cmd\+/gi, '⌘ ');
+            
+            console.log(`🎨 formatKeyForDisplay output: "${formatted}"`);
+            return formatted;
+        }
+        
+        function testMacDisplay() {
+            const testKeys = [
+                'meta+m',
+                'ctrl+b', 
+                'meta+shift+m',
+                'alt+g',
+                'meta+f'
+            ];
+            
+            let html = '<h2>Test Results:</h2>';
+            testKeys.forEach(key => {
+                const display = formatKeyForDisplay(key, true);
+                html += `<p><code>${key}</code> → <strong>${display}</strong></p>`;
+            });
+            
+            document.getElementById('results').innerHTML = html;
+        }
+    </script>
+</body>
+</html>

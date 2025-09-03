@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Parser Fix</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ddd; background: #f9f9f9; }
+        code { background: #eee; padding: 2px 4px; }
+    </style>
+</head>
+<body>
+    <h1>Test M- Key Parsing Fix</h1>
+    <button onclick="testParsing()">Test Parser</button>
+    <div id="results"></div>
+    
+    <script src="lyx-parser.js"></script>
+    <script>
+        function testParsing() {
+            const parser = new LyXConfigParser();
+            
+            // Test with mapMetaToCtrl = false (M- should become meta+)
+            const testConfig = `
+\\bind "M-b" "char-backward"
+\\bind "M-f" "char-forward"
+\\bind "M-m" "math-mode"
+\\bind "C-b" "font-bold"
+            `;
+            
+            const optionsMeta = { mapMetaToCtrl: false };
+            const mappingsMeta = parser.parse(testConfig, optionsMeta);
+            
+            const optionsCtrl = { mapMetaToCtrl: true };
+            const mappingsCtrl = parser.parse(testConfig, optionsCtrl);
+            
+            let html = '<div class="result">';
+            html += '<h3>With M- → Meta (Command):</h3>';
+            for (const [key, action] of mappingsMeta) {
+                html += `<p><code>${key}</code> → ${action.type}</p>`;
+            }
+            html += '</div>';
+            
+            html += '<div class="result">';
+            html += '<h3>With M- → Ctrl:</h3>';
+            for (const [key, action] of mappingsCtrl) {
+                html += `<p><code>${key}</code> → ${action.type}</p>`;
+            }
+            html += '</div>';
+            
+            document.getElementById('results').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
