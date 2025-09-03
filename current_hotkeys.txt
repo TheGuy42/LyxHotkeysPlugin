@@ -1,0 +1,128 @@
+⌘ B
+Navigate: moveLeft
+⌘ D
+Delete: deleteRight
+⌘ E
+Navigate: moveLineEnd
+⌘ F
+Navigate: moveRight
+⌘ H
+Delete: deleteLeft
+⌘ O
+Insert: " "
+⌦
+Delete: deleteRight
+⌃ B
+Wrap with: "**" ... "**"
+⌃ C
+Clipboard: copy
+⌃ E
+Wrap with: "*" ... "*"
+⌃ K
+Delete: deleteLineForward
+⌃ M
+Wrap with: "$" ... "$"
+⌃ ⇧ M
+Wrap with: "$$ " ... " $$"
+⌃ ⇧ P
+Wrap with: "`" ... "`"
+⌃ U
+Wrap with: "_" ... "_"
+⌃ V
+Clipboard: paste
+⌃ X
+Clipboard: cut
+⌃ Z
+Edit: undo
+⌃ ⇧ Z
+Edit: redo
+⌃ →
+Navigate: moveLineEnd
+⌃ ←
+Navigate: moveLineStart
+⌃ ↓
+Navigate: moveDocumentEnd
+⌃ ↑
+Navigate: moveDocumentStart
+⇧ ⌃ →
+Select: selectLineEnd
+⇧ ⌃ ←
+Select: selectLineStart
+⇧ →
+Select: selectRight
+⇧ ←
+Select: selectLeft
+⇧ ⌃ ↑
+Select: selectDocumentStart
+⇧ ⌃ ↓
+Select: selectDocumentEnd
+⌥ →
+Navigate: moveWordRight
+⇧ ⌥ →
+Select: selectWordRight
+⌥ ←
+Navigate: moveWordLeft
+⇧ ⌥ ←
+Select: selectWordLeft
+⌃ ⇧ O
+Wrap with: "~~" ... "~~"
+~⇧ ⌘ "
+Insert: """
+~⇧ ⌃ "
+Insert: "'"
+⌃ ⌘ -
+Insert: "‑"
+⌃ ⇧ L
+Insert: "‌"
+⌃ L
+Wrap with: "\" ... ""
+⌃ InS
+Clipboard: copy
+⇧ InS
+Clipboard: paste
+⇧ ⌦
+Clipboard: cut
+⇧ Num →
+Select: selectRight
+⇧ Num ←
+Select: selectLeft
+⇧ ⌘ Num →
+Select: selectWordRight
+⇧ ⌘ Num ←
+Select: selectWordLeft
+⇧ Num ⤴
+Select: selectLineStart
+⇧ Num ⤵
+Select: selectLineEnd
+⇧ ⌃ Num ⤴
+Select: selectDocumentStart
+⇧ ⌃ Num ⤵
+Select: selectDocumentEnd
+⌃ Num InS
+Clipboard: copy
+⇧ Num InS
+Clipboard: paste
+⇧ Num ⌦
+Clipboard: cut
+⌥ ⌦
+Delete: deleteWordRight
+⌥ ⌫
+Delete: deleteWordLeft
+⌘ ⏎
+Insert: " "
+⌃ ⏎
+Insert: " "
+⌃ ⇧ ⏎
+Insert: "\\ "
+NoBreak␣
+Insert: " "
+⌃ ⌥ ␣
+Insert: " "
+⇧ ⌥ ␣
+Insert: " "
+⌃ ~⇧ /
+Insert: "/"
+⌃ .
+Insert: ". "
+⌘ .
+Insert: "…"

@@ -165,13 +165,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadCurrentConfig() {
     try {
-      const result = await chrome.storage.local.get(['config', 'hotkeyMappings']);
+      const result = await chrome.storage.local.get(['config', 'hotkeyMappings', 'macMMapping']);
       
       if (result.config) {
         configTextarea.value = result.config;
-      }
-      
-      if (result.hotkeyMappings) {
+        
+        // Always reparse the config with current Mac preference instead of loading stored mappings
+        // This ensures the mappings match the current preference setting
+        await parseAndDisplayConfig(result.config);
+      } else if (result.hotkeyMappings) {
+        // Fallback: only use stored mappings if no config text is available
         currentMappings = new Map(Object.entries(result.hotkeyMappings));
         await displayHotkeyList();
       }
@@ -205,6 +208,17 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log(`🔧 Parsing config with Mac preference: ${macMMapping}`, options);
       console.log(`🔧 Platform detected as Mac: ${isMac}`);
       const mappings = parser.parse(configText, options);
+      
+      // Debug: Log some key mappings to see what we got
+      console.log(`🔍 Sample mappings generated:`);
+      let count = 0;
+      for (const [key, action] of mappings) {
+        if (count < 5) {
+          console.log(`  "${key}" → ${action.type}: ${action.action || action.text || 'unknown'}`);
+          count++;
+        }
+      }
+      
       currentMappings = mappings;
       await displayHotkeyList();
       showStatus(`Parsed ${mappings.size} hotkey mappings`, 'success');
@@ -475,7 +489,19 @@ document.addEventListener('DOMContentLoaded', () => {
           mapMetaToCtrl: preference === 'ctrl'
         };
         
+        console.log(`🔄 Reparsing with preference: ${preference}`, options);
         const mappings = parser.parse(result.config, options);
+        
+        // Debug: Log some key mappings to see what we got after reparse
+        console.log(`🔍 Sample mappings after reparse:`);
+        let count = 0;
+        for (const [key, action] of mappings) {
+          if (count < 5 && key.includes('m')) { // Focus on M- keys
+            console.log(`  "${key}" → ${action.type}: ${action.action || action.text || 'unknown'}`);
+            count++;
+          }
+        }
+        
         const mappingsObj = Object.fromEntries(mappings);
         
         // Update storage and display

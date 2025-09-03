@@ -21,6 +21,8 @@ class LyXConfigParser {
     this.keySequences.clear();
     this.options = options; // Store options for use in parseBind
 
+    // First pass: collect all bindings
+    const rawBindings = [];
     for (let line of lines) {
       line = line.trim();
       
@@ -32,15 +34,116 @@ class LyXConfigParser {
 
       // Parse \bind statements
       if (line.startsWith('\\bind ')) {
-        this.parseBind(line);
+        const binding = this.parseBindLine(line);
+        if (binding) {
+          rawBindings.push(binding);
+        }
       }
     }
+
+    // Second pass: resolve conflicts and build final mappings
+    this.resolveConflictsAndBuild(rawBindings, options);
 
     return this.keySequences;
   }
 
   /**
-   * Parse a single \bind statement
+   * Parse a single \bind line and return binding info
+   * @param {string} line - The bind line to parse
+   * @returns {Object|null} - Binding info or null if invalid
+   */
+  parseBindLine(line) {
+    const match = line.match(/\\bind\s+"([^"]+)"\s+"([^"]+)"/);
+    if (!match) return null;
+
+    const [, keySequence, command] = match;
+    return { originalKey: keySequence, command };
+  }
+
+  /**
+   * Resolve conflicts between M- and C- bindings when mapping M- to Command
+   * @param {Array} rawBindings - Array of {originalKey, command} objects
+   * @param {Object} options - Parsing options
+   */
+  resolveConflictsAndBuild(rawBindings, options) {
+    const isMac = typeof navigator !== 'undefined' && 
+                  navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    
+    // Track M- keys that will be mapped to meta+ when mapMetaToCtrl = false
+    const metaKeys = new Set();
+    const conflictingCtrlKeys = new Set();
+    const ctrlKeysToPromote = new Set(); // C- keys to convert to meta+ when no M- exists
+    
+    // Common keys that users expect to work with Command on Mac
+    const commonMacKeys = ['m', 'n', 'o', 'p', 'q', 'r', 's', 't', 'w'];
+    
+    // First pass: identify potential conflicts and promotion candidates
+    if (isMac && !options.mapMetaToCtrl) {
+      console.log(`🔧 LyX Parser: Mac Command mapping mode - checking for M-/C- conflicts`);
+      
+      // Collect all M- keys that exist
+      for (const binding of rawBindings) {
+        if (binding.originalKey.startsWith('M-')) {
+          const baseKey = binding.originalKey.substring(2); // Remove "M-"
+          metaKeys.add(baseKey);
+        }
+      }
+      
+      // Find conflicts and promotion candidates
+      for (const binding of rawBindings) {
+        if (binding.originalKey.startsWith('C-')) {
+          const baseKey = binding.originalKey.substring(2); // Remove "C-"
+          
+          // Check if there's a conflicting M- binding with same action
+          for (const otherBinding of rawBindings) {
+            if (otherBinding.originalKey === `M-${baseKey}` && 
+                otherBinding.command === binding.command) {
+              conflictingCtrlKeys.add(binding.originalKey);
+              console.log(`🔧 LyX Parser: Conflict resolution - skipping "${binding.originalKey}" in favor of "M-${baseKey}" → meta+${baseKey}`);
+            }
+          }
+          
+          // Check if this is a common Mac key that should be promoted to Command
+          if (commonMacKeys.includes(baseKey) && !metaKeys.has(baseKey)) {
+            ctrlKeysToPromote.add(binding.originalKey);
+            conflictingCtrlKeys.add(binding.originalKey); // Skip the original C- version
+            console.log(`🔧 LyX Parser: Promoting "${binding.originalKey}" to Command (meta+${baseKey}) for Mac compatibility`);
+          }
+        }
+      }
+      
+      if (conflictingCtrlKeys.size > 0) {
+        console.log(`🔧 LyX Parser: Resolved ${conflictingCtrlKeys.size} M-/C- conflicts for Command mapping`);
+      }
+    }
+    
+    // Second pass: build final mappings, skipping conflicting C- keys and adding promoted keys
+    for (const binding of rawBindings) {
+      // Skip conflicting ctrl keys when mapping M- to Command
+      if (conflictingCtrlKeys.has(binding.originalKey)) {
+        // If this key should be promoted, add it as meta+ instead
+        if (ctrlKeysToPromote.has(binding.originalKey)) {
+          const baseKey = binding.originalKey.substring(2); // Remove "C-"
+          const metaKey = `meta+${baseKey}`;
+          const action = this.convertCommand(binding.command);
+          if (action) {
+            this.keySequences.set(metaKey, action);
+          }
+        }
+        continue;
+      }
+      
+      const normalizedKey = this.normalizeKeySequence(binding.originalKey, options);
+      const action = this.convertCommand(binding.command);
+      
+      if (action) {
+        this.keySequences.set(normalizedKey, action);
+      }
+    }
+  }
+
+  /**
+   * Parse a single \bind statement (legacy method, replaced by parseBindLine)
    * @param {string} line - The bind line to parse
    */
   parseBind(line) {
