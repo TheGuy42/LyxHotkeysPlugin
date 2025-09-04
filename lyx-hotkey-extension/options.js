@@ -1,574 +1,551 @@
 /**
  * Options Page Script for LyX Hotkey Extension
- * Handles configuration management and file operations
+ * Refactored to use modular architecture with proper separation of concerns
  */
 
-// Initialize everything when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  const uploadArea = document.getElementById('uploadArea');
-  const fileInput = document.getElementById('fileInput');
-  const configTextarea = document.getElementById('configTextarea');
-  const statusMessage = document.getElementById('statusMessage');
-  const hotkeyList = document.getElementById('hotkeyList');
-  const macKeyNote = document.getElementById('macKeyNote');
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', async () => {
+  // Wait for modules to be available
+  while (typeof LyXLogger === 'undefined' || typeof LyXUIUtils === 'undefined') {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
   
-  const browseButton = document.getElementById('browseButton');
-  const loadSampleButton = document.getElementById('loadSampleButton');
-  const exportButton = document.getElementById('exportButton');
-  const saveButton = document.getElementById('saveButton');
-  const resetButton = document.getElementById('resetButton');
-  const clearButton = document.getElementById('clearButton');
+  const logger = LyXLogger.getLogger('Options');
+  const uiUtils = LyXUIUtils.getUIUtils(logger);
+  
+  logger.info('Options page initializing...');
+  
+  // Initialize options controller
+  const optionsController = new OptionsController(logger, uiUtils);
+  await optionsController.initialize();
+  
+  logger.info('Options page initialized successfully');
+});
 
-  let currentMappings = new Map();
-
-  // Show/hide Mac note based on platform
-  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-  if (!isMac && macKeyNote) {
-    macKeyNote.style.display = 'none';
+/**
+ * Options Controller class to manage the options page
+ */
+class OptionsController {
+  constructor(logger, uiUtils) {
+    this.logger = logger;
+    this.uiUtils = uiUtils;
+    this.currentMappings = new Map();
+    this.configParser = null;
+    this.isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   }
 
-  // Handle Mac key mapping preference
-  if (isMac) {
-    const macMappingRadios = document.querySelectorAll('input[name="macMMapping"]');
-    macMappingRadios.forEach(radio => {
-      radio.addEventListener('change', async () => {
-        if (radio.checked) {
-          saveMacKeyPreference(radio.value);
-          // Reparse current config with new preference
-          if (currentMappings.size > 0) {
-            await reparseWithMacPreference();
-          }
+  /**
+   * Initialize the options controller
+   */
+  async initialize() {
+    try {
+      // Initialize config parser
+      this.configParser = new LyXConfigParser();
+      
+      // Get DOM elements
+      this.elements = this.getElements();
+      
+      // Set up event listeners
+      this.setupEventListeners();
+      
+      // Load current configuration
+      await this.loadCurrentConfig();
+      
+      // Set up platform-specific features
+      this.setupPlatformFeatures();
+      
+      // Load preferences
+      await this.loadPreferences();
+      
+      this.logger.debug('Options controller initialized');
+      
+    } catch (error) {
+      this.logger.error('Failed to initialize options:', error);
+      this.uiUtils.showStatus('Failed to initialize options page', 'error');
+    }
+  }
+
+  /**
+   * Get required DOM elements
+   */
+  getElements() {
+    try {
+      return {
+        // File upload
+        uploadArea: this.uiUtils.getElementById('uploadArea'),
+        fileInput: this.uiUtils.getElementById('fileInput'),
+        browseButton: this.uiUtils.getElementById('browseButton'),
+        
+        // Config textarea
+        configTextarea: this.uiUtils.getElementById('configTextarea'),
+        
+        // Buttons
+        loadSampleButton: this.uiUtils.getElementById('loadSampleButton'),
+        saveButton: this.uiUtils.getElementById('saveButton'),
+        resetButton: this.uiUtils.getElementById('resetButton'),
+        clearButton: this.uiUtils.getElementById('clearButton'),
+        exportButton: this.uiUtils.getElementById('exportButton'),
+        
+        // Display
+        hotkeyList: this.uiUtils.getElementById('hotkeyList'),
+        statusMessage: this.uiUtils.getElementById('statusMessage', false),
+        
+        // Mac preferences
+        macKeyNote: this.uiUtils.getElementById('macKeyNote', false),
+        
+        // Sequence timeout
+        sequenceTimeoutSlider: this.uiUtils.getElementById('sequenceTimeout', false),
+        timeoutValueDisplay: this.uiUtils.getElementById('timeoutValue', false)
+      };
+    } catch (error) {
+      this.logger.error('Failed to get DOM elements:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set up event listeners
+   */
+  setupEventListeners() {
+    // File upload
+    this.setupFileUpload();
+    
+    // Button handlers
+    this.uiUtils.addEventListener(this.elements.browseButton, 'click', () => {
+      this.elements.fileInput.click();
+    });
+    
+    this.uiUtils.addEventListener(this.elements.loadSampleButton, 'click', () => {
+      this.loadSampleConfig();
+    });
+    
+    this.uiUtils.addEventListener(this.elements.saveButton, 'click', () => {
+      this.saveConfiguration();
+    });
+    
+    this.uiUtils.addEventListener(this.elements.resetButton, 'click', () => {
+      this.resetConfiguration();
+    });
+    
+    this.uiUtils.addEventListener(this.elements.clearButton, 'click', () => {
+      this.clearConfiguration();
+    });
+    
+    this.uiUtils.addEventListener(this.elements.exportButton, 'click', () => {
+      this.exportConfiguration();
+    });
+    
+    // Config textarea changes
+    this.uiUtils.addEventListener(this.elements.configTextarea, 'input', 
+      this.uiUtils.debounce(() => this.parseCurrentConfig(), 500)
+    );
+  }
+
+  /**
+   * Set up file upload functionality
+   */
+  setupFileUpload() {
+    // Drag and drop
+    this.uiUtils.addEventListener(this.elements.uploadArea, 'dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.elements.uploadArea.classList.add('dragover');
+    });
+    
+    this.uiUtils.addEventListener(this.elements.uploadArea, 'dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.elements.uploadArea.classList.remove('dragover');
+    });
+    
+    this.uiUtils.addEventListener(this.elements.uploadArea, 'drop', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.elements.uploadArea.classList.remove('dragover');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        await this.handleFileUpload(files[0]);
+      }
+    });
+    
+    // File input change
+    this.uiUtils.addEventListener(this.elements.fileInput, 'change', async (e) => {
+      if (e.target.files.length > 0) {
+        await this.handleFileUpload(e.target.files[0]);
+      }
+    });
+  }
+
+  /**
+   * Handle file upload
+   */
+  async handleFileUpload(file) {
+    try {
+      const fileData = await this.uiUtils.handleFileUpload(
+        { files: [file] }, 
+        {
+          maxSize: 1024 * 1024, // 1MB
+          allowedTypes: ['text/plain', 'application/octet-stream'],
+          readAs: 'text'
         }
-      });
-    });
-    
-    // Load saved preference
-    loadMacKeyPreference();
-  }
-
-  // Handle sequence timeout slider
-  const sequenceTimeoutSlider = document.getElementById('sequenceTimeout');
-  const timeoutValueDisplay = document.getElementById('timeoutValue');
-  
-  if (sequenceTimeoutSlider && timeoutValueDisplay) {
-    sequenceTimeoutSlider.addEventListener('input', (e) => {
-      const value = e.target.value;
-      timeoutValueDisplay.textContent = `${value}ms`;
-      saveSequenceTimeout(parseInt(value));
-    });
-    
-    // Load saved timeout value
-    loadSequenceTimeout();
-  }
-
-  // Load current configuration on page load
-  loadCurrentConfig();
-
-  // File upload event listeners
-  uploadArea.addEventListener('click', () => fileInput.click());
-  uploadArea.addEventListener('dragover', handleDragOver);
-  uploadArea.addEventListener('dragleave', handleDragLeave);
-  uploadArea.addEventListener('drop', handleDrop);
-  
-  fileInput.addEventListener('change', handleFileSelect);
-  
-  // Button event listeners
-  browseButton.addEventListener('click', () => fileInput.click());
-  loadSampleButton.addEventListener('click', loadSampleConfig);
-  exportButton.addEventListener('click', exportCurrentConfig);
-  saveButton.addEventListener('click', saveConfiguration);
-  resetButton.addEventListener('click', resetToDefaults);
-  clearButton.addEventListener('click', clearAllConfig);
-
-  // Drag and drop handlers
-  function handleDragOver(e) {
-    e.preventDefault();
-    uploadArea.classList.add('dragover');
-  }
-
-  function handleDragLeave(e) {
-    e.preventDefault();
-    uploadArea.classList.remove('dragover');
-  }
-
-  function handleDrop(e) {
-    e.preventDefault();
-    uploadArea.classList.remove('dragover');
-    
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      processFile(files[0]);
+      );
+      
+      this.elements.configTextarea.value = fileData.content;
+      await this.parseCurrentConfig();
+      
+      this.uiUtils.showStatus(`File "${fileData.name}" loaded successfully`, 'success');
+      this.logger.info(`Config file loaded: ${fileData.name} (${this.uiUtils.formatFileSize(fileData.size)})`);
+      
+    } catch (error) {
+      this.logger.error('Failed to handle file upload:', error);
+      this.uiUtils.showStatus(`Failed to load file: ${error.message}`, 'error');
     }
   }
 
-  function handleFileSelect(e) {
-    const files = e.target.files;
-    if (files.length > 0) {
-      processFile(files[0]);
-    }
-  }
+  /**
+   * Load sample configuration
+   */
+  loadSampleConfig() {
+    const sampleConfig = `# Sample LyX Configuration
+# Math mode
+\\bind "C-m" "math-mode"
+\\bind "C-S-m" "math-display"
 
-  function processFile(file) {
-    if (!file.name.endsWith('.bind') && !file.name.endsWith('.txt')) {
-      showStatus('Please select a .bind or .txt file', 'error');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const content = e.target.result;
-      configTextarea.value = content;
-      showStatus(`Loaded file: ${file.name}`, 'success');
-      await parseAndDisplayConfig(content);
-    };
-    reader.onerror = () => {
-      showStatus('Error reading file', 'error');
-    };
-    reader.readAsText(file);
-  }
-
-  async function loadSampleConfig() {
-    const sampleConfig = `# Sample LyX Hotkey Configuration
 # Text formatting
 \\bind "C-b" "font-bold"
 \\bind "C-e" "font-emph"
 \\bind "C-u" "font-underline"
-\\bind "C-S-P" "font-typewriter"
-
-# Math mode
-\\bind "C-m" "math-mode"
-\\bind "C-S-M" "math-display"
-
-# LaTeX commands
-\\bind "C-l" "ert-insert"
-\\bind "C-S-F" "math-insert \\\\frac"
-\\bind "C-S-R" "math-insert \\\\sqrt"
 
 # Greek letters
 \\bind "A-g" "math-insert \\\\alpha"
-\\bind "A-b" "math-insert \\\\beta"
-\\bind "A-d" "math-insert \\\\delta"
-\\bind "A-l" "math-insert \\\\lambda"
 \\bind "A-p" "math-insert \\\\pi"
 \\bind "A-s" "math-insert \\\\sigma"
-\\bind "A-t" "math-insert \\\\theta"
 
 # Special characters
 \\bind "A-space" "space-insert protected"
-\\bind "C-period" "specialchar-insert end-of-sentence"
-\\bind "M-period" "specialchar-insert dots"`;
+\\bind "C-period" "specialchar-insert end-of-sentence"`;
 
-    configTextarea.value = sampleConfig;
-    showStatus('Sample configuration loaded', 'info');
-    await parseAndDisplayConfig(sampleConfig);
+    this.elements.configTextarea.value = sampleConfig;
+    this.parseCurrentConfig();
+    this.uiUtils.showStatus('Sample configuration loaded', 'success');
   }
 
-  async function loadCurrentConfig() {
-    try {
-      const result = await chrome.storage.local.get(['config', 'hotkeyMappings', 'macMMapping']);
-      
-      if (result.config) {
-        configTextarea.value = result.config;
-        
-        // Always reparse the config with current Mac preference instead of loading stored mappings
-        // This ensures the mappings match the current preference setting
-        await parseAndDisplayConfig(result.config);
-      } else if (result.hotkeyMappings) {
-        // Fallback: only use stored mappings if no config text is available
-        currentMappings = new Map(Object.entries(result.hotkeyMappings));
-        await displayHotkeyList();
-      }
-    } catch (error) {
-      showStatus('Error loading current configuration', 'error');
+  /**
+   * Parse current configuration
+   */
+  async parseCurrentConfig() {
+    const configText = this.elements.configTextarea.value.trim();
+    
+    if (!configText) {
+      this.currentMappings.clear();
+      this.updateHotkeyDisplay();
+      return;
     }
-  }
-
-  async function parseAndDisplayConfig(configText) {
+    
     try {
-      const parser = new LyXConfigParser();
-      
-      // Get current Mac preference
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      let macMMapping = 'ctrl'; // default
-      
-      if (isMac) {
-        try {
-          const result = await chrome.storage.local.get(['macMMapping']);
-          macMMapping = result.macMMapping || 'ctrl';
-        } catch (error) {
-          console.warn('Could not load Mac preference, using default:', error);
-        }
-      }
-      
-      // Parse with Mac preference options
+      // Get Mac preference
+      const macMMapping = await this.getMacKeyPreference();
       const options = {
         mapMetaToCtrl: macMMapping === 'ctrl'
       };
       
-      console.log(`🔧 Parsing config with Mac preference: ${macMMapping}`, options);
-      console.log(`🔧 Platform detected as Mac: ${isMac}`);
-      const mappings = parser.parse(configText, options);
+      this.logger.debug('Parsing config with options:', options);
+      const mappings = this.configParser.parse(configText, options);
       
-      // Debug: Log some key mappings to see what we got
-      console.log(`🔍 Sample mappings generated:`);
-      let count = 0;
-      for (const [key, action] of mappings) {
-        if (count < 5) {
-          console.log(`  "${key}" → ${action.type}: ${action.action || action.text || 'unknown'}`);
-          count++;
-        }
-      }
+      this.currentMappings = mappings;
+      this.updateHotkeyDisplay();
       
-      currentMappings = mappings;
-      await displayHotkeyList();
-      showStatus(`Parsed ${mappings.size} hotkey mappings`, 'success');
+      this.logger.info(`Configuration parsed: ${mappings.size} mappings`);
+      
     } catch (error) {
-      showStatus('Error parsing configuration: ' + error.message, 'error');
+      this.logger.error('Failed to parse configuration:', error);
+      this.uiUtils.showStatus(`Parse error: ${error.message}`, 'error');
     }
   }
 
-  async function displayHotkeyList() {
-    if (currentMappings.size === 0) {
-      hotkeyList.innerHTML = '<p style="text-align: center; color: #718096; margin: 20px 0;">No hotkeys configured</p>';
+  /**
+   * Save configuration to extension
+   */
+  async saveConfiguration() {
+    try {
+      const configText = this.elements.configTextarea.value;
+      
+      // Send to background script
+      const response = await chrome.runtime.sendMessage({
+        action: 'loadConfig',
+        configText: configText
+      });
+      
+      if (response && response.success) {
+        this.uiUtils.showStatus('Configuration saved successfully', 'success');
+        this.logger.info('Configuration saved to extension');
+      } else {
+        throw new Error(response?.error || 'Unknown error');
+      }
+      
+    } catch (error) {
+      this.logger.error('Failed to save configuration:', error);
+      this.uiUtils.showStatus(`Failed to save: ${error.message}`, 'error');
+    }
+  }
+
+  /**
+   * Reset configuration to defaults
+   */
+  async resetConfiguration() {
+    const confirmed = await this.uiUtils.showConfirmDialog(
+      'This will reset all hotkeys to their default values. Continue?',
+      'Reset Configuration'
+    );
+    
+    if (confirmed) {
+      this.elements.configTextarea.value = '';
+      this.currentMappings.clear();
+      this.updateHotkeyDisplay();
+      
+      // Clear from extension
+      await this.saveConfiguration();
+      
+      this.uiUtils.showStatus('Configuration reset to defaults', 'success');
+      this.logger.info('Configuration reset');
+    }
+  }
+
+  /**
+   * Clear all configuration
+   */
+  async clearConfiguration() {
+    const confirmed = await this.uiUtils.showConfirmDialog(
+      'This will clear all hotkey configuration. Continue?',
+      'Clear Configuration'
+    );
+    
+    if (confirmed) {
+      this.elements.configTextarea.value = '';
+      this.currentMappings.clear();
+      this.updateHotkeyDisplay();
+      this.uiUtils.showStatus('Configuration cleared', 'success');
+    }
+  }
+
+  /**
+   * Export configuration to file
+   */
+  exportConfiguration() {
+    const configText = this.elements.configTextarea.value;
+    if (!configText.trim()) {
+      this.uiUtils.showStatus('No configuration to export', 'warning');
       return;
     }
-
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    let macMMapping = 'ctrl'; // default
     
-    if (isMac) {
-      try {
-        const result = await chrome.storage.local.get(['macMMapping']);
-        macMMapping = result.macMMapping || 'ctrl';
-      } catch (error) {
-        console.warn('Could not load Mac preference for display, using default:', error);
-      }
-    }
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substr(0, 19);
+    const filename = `lyx-config-${timestamp}.bind`;
     
-    let html = '';
-    for (const [key, action] of currentMappings) {
-      console.log(`🎯 Mapping key: "${key}" → action:`, action);
-      console.log(`🔧 Mac mapping preference for display: ${macMMapping}`);
-      const displayKey = formatKeyForDisplay(key, isMac, macMMapping);
-      console.log(`🎨 Display key: "${key}" → "${displayKey}"`);
-      
-      // Check if this is a sequence (contains space)
-      const isSequence = key.includes(' ');
-      const sequenceClass = isSequence ? ' sequence' : '';
-      
-      html += `
-        <div class="hotkey-item${sequenceClass}">
-          <span class="hotkey-key">${displayKey}</span>
-          <span class="hotkey-action">${getActionDescription(action)}</span>
-        </div>
-      `;
-    }
-    
-    hotkeyList.innerHTML = html;
+    this.uiUtils.downloadTextAsFile(configText, filename, 'text/plain');
+    this.uiUtils.showStatus('Configuration exported', 'success');
+    this.logger.info(`Configuration exported as ${filename}`);
   }
 
-  function formatKeyForDisplay(key, isMac, macMMapping) {
-    if (!isMac) return key;
+  /**
+   * Update hotkey display
+   */
+  updateHotkeyDisplay() {
+    if (!this.elements.hotkeyList) return;
     
-    console.log(`🎨 formatKeyForDisplay: key="${key}", isMac=${isMac}, macMMapping=${macMMapping}`);
-    
-    // Check if this is a sequence (contains space)
-    const isSequence = key.includes(' ');
-    
-    if (isSequence) {
-      // Handle sequences - format each part separately and join with arrows
-      const parts = key.split(' ');
-      const formattedParts = parts.map(part => formatSingleKey(part, isMac, macMMapping));
-      return formattedParts.join(' → ');
-    } else {
-      // Handle single key combination
-      return formatSingleKey(key, isMac, macMMapping);
-    }
-  }
-
-  function formatSingleKey(key, isMac, macMMapping) {
-    // Convert to Mac-style display based on user preference
-    let formatted;
-    if (macMMapping === 'meta') {
-      // User chose to map M- to Command, show meta+ as ⌘
-      formatted = key
-        .replace(/ctrl\+/gi, '⌃')  // Regular Ctrl keys (no space for simultaneous)
-        .replace(/meta\+/gi, '⌘')  // M- keys mapped to Command  
-        .replace(/alt\+/gi, '⌥')
-        .replace(/shift\+/gi, '⇧');
-    } else {
-      // User chose to map M- to Ctrl (default), show both ctrl+ and meta+ as ⌃
-      formatted = key
-        .replace(/ctrl\+/gi, '⌃')  // Regular Ctrl keys (no space for simultaneous)
-        .replace(/meta\+/gi, '⌃')  // M- keys mapped to Ctrl  
-        .replace(/alt\+/gi, '⌥')
-        .replace(/shift\+/gi, '⇧');
+    if (this.currentMappings.size === 0) {
+      this.elements.hotkeyList.innerHTML = '<div class="no-hotkeys">No hotkeys configured</div>';
+      return;
     }
     
-    // Clean up arrow keys and special keys - be specific to avoid double replacements
-    formatted = formatted
-      .replace(/arrowright/gi, '→')
-      .replace(/arrowleft/gi, '←')
-      .replace(/arrowup/gi, '↑')
-      .replace(/arrowdown/gi, '↓')
-      .replace(/enter/gi, '⏎')
-      .replace(/backspace/gi, '⌫')
-      .replace(/space/gi, '␣')
-      .replace(/delete/gi, '⌦')
-      .replace(/insert/gi, 'Ins')
-      .replace(/home/gi, '⤴')
-      .replace(/end/gi, '⤵')
-      .replace(/kp_/gi, 'Num ')
-      .replace(/period/gi, '.')
-      .replace(/quotedbl/gi, '"')
-      .replace(/minus/gi, '-')
-      .replace(/slash/gi, '/')
-      .replace(/nobreak/gi, 'NoBreak');
+    const hotkeyItems = Array.from(this.currentMappings.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, action]) => {
+        return `
+          <div class="hotkey-item">
+            <div class="hotkey-key">${this.escapeHtml(key)}</div>
+            <div class="hotkey-action">${this.formatActionForDisplay(action)}</div>
+          </div>
+        `;
+      })
+      .join('');
     
-    // Clean up and format final result - remove trailing + and uppercase
-    formatted = formatted
-      .replace(/\s+$/, '')  // Remove trailing spaces
-      .replace(/\+$/, '')   // Remove trailing +
-      .trim();
-    
-    // Uppercase the final key only (single letters)
-    formatted = formatted.replace(/([a-z])$/i, (match) => match.toUpperCase());
-    
-    return formatted;
+    this.elements.hotkeyList.innerHTML = hotkeyItems;
   }
 
-  function getActionDescription(action) {
+  /**
+   * Format action for display
+   */
+  formatActionForDisplay(action) {
     switch (action.type) {
       case 'insert':
-        return `Insert: "${action.text}"`;
+        return `Insert: ${this.escapeHtml(action.text)}`;
       case 'wrap':
-        return `Wrap with: "${action.before}" ... "${action.after}"`;
-      case 'navigation':
-        return `Navigate: ${action.action}`;
-      case 'selection':
-        return `Select: ${action.action}`;
-      case 'delete':
-        return `Delete: ${action.action}`;
-      case 'clipboard':
-        return `Clipboard: ${action.action}`;
-      case 'edit':
-        return `Edit: ${action.action}`;
+        return `Wrap: ${this.escapeHtml(action.before)}...${this.escapeHtml(action.after)}`;
       default:
-        return 'Unknown action';
+        return this.escapeHtml(action.type);
     }
   }
 
-  async function saveConfiguration() {
-    const configText = configTextarea.value.trim();
-    
-    if (!configText) {
-      showStatus('Please enter a configuration', 'error');
-      return;
-    }
+  /**
+   * Escape HTML for safe display
+   */
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
 
+  /**
+   * Set up platform-specific features
+   */
+  setupPlatformFeatures() {
+    // Hide Mac note on non-Mac platforms
+    if (!this.isMac && this.elements.macKeyNote) {
+      this.elements.macKeyNote.style.display = 'none';
+    }
+    
+    // Set up Mac key preference
+    if (this.isMac) {
+      this.setupMacKeyPreference();
+    }
+    
+    // Set up sequence timeout
+    this.setupSequenceTimeout();
+  }
+
+  /**
+   * Set up Mac key preference handling
+   */
+  setupMacKeyPreference() {
+    const macMappingRadios = document.querySelectorAll('input[name="macMMapping"]');
+    macMappingRadios.forEach(radio => {
+      this.uiUtils.addEventListener(radio, 'change', async () => {
+        if (radio.checked) {
+          await this.saveMacKeyPreference(radio.value);
+          // Reparse current config with new preference
+          if (this.currentMappings.size > 0) {
+            await this.parseCurrentConfig();
+          }
+        }
+      });
+    });
+  }
+
+  /**
+   * Set up sequence timeout handling
+   */
+  setupSequenceTimeout() {
+    if (this.elements.sequenceTimeoutSlider && this.elements.timeoutValueDisplay) {
+      this.uiUtils.addEventListener(this.elements.sequenceTimeoutSlider, 'input', (e) => {
+        const value = e.target.value;
+        this.elements.timeoutValueDisplay.textContent = `${value}ms`;
+        this.saveSequenceTimeout(parseInt(value));
+      });
+    }
+  }
+
+  /**
+   * Load current configuration from storage
+   */
+  async loadCurrentConfig() {
     try {
-      // Parse the configuration
-      await parseAndDisplayConfig(configText);
-      
-      // Save to storage
-      const mappingsObj = Object.fromEntries(currentMappings);
-      await chrome.storage.local.set({
-        config: configText,
-        hotkeyMappings: mappingsObj
-      });
-      
-      // Notify background script
-      await chrome.runtime.sendMessage({
-        action: 'updateMappings',
-        mappings: mappingsObj
-      });
-      
-      showStatus('Configuration saved successfully!', 'success');
+      const result = await chrome.storage.local.get(['config']);
+      if (result.config) {
+        this.elements.configTextarea.value = result.config;
+        await this.parseCurrentConfig();
+        this.logger.debug('Current config loaded from storage');
+      }
     } catch (error) {
-      showStatus('Error saving configuration: ' + error.message, 'error');
+      this.logger.error('Failed to load current config:', error);
     }
   }
 
-  async function resetToDefaults() {
-    if (!confirm('Are you sure you want to reset to default configuration? This will overwrite your current settings.')) {
-      return;
-    }
-
-    try {
-      // Send message to background script to load defaults
-      await chrome.runtime.sendMessage({ action: 'loadConfig', configText: '' });
-      
-      // Reload the page configuration
-      await loadCurrentConfig();
-      
-      showStatus('Reset to default configuration', 'success');
-    } catch (error) {
-      showStatus('Error resetting configuration: ' + error.message, 'error');
-    }
+  /**
+   * Load preferences from storage
+   */
+  async loadPreferences() {
+    await Promise.all([
+      this.loadMacKeyPreference(),
+      this.loadSequenceTimeout()
+    ]);
   }
 
-  async function clearAllConfig() {
-    if (!confirm('Are you sure you want to clear all hotkey configurations? This cannot be undone.')) {
-      return;
-    }
-
-    try {
-      await chrome.storage.local.set({
-        config: '',
-        hotkeyMappings: {}
-      });
-      
-      await chrome.runtime.sendMessage({
-        action: 'updateMappings',
-        mappings: {}
-      });
-      
-      configTextarea.value = '';
-      currentMappings.clear();
-      await displayHotkeyList();
-      
-      showStatus('All configurations cleared', 'info');
-    } catch (error) {
-      showStatus('Error clearing configuration: ' + error.message, 'error');
-    }
-  }
-
-  function exportCurrentConfig() {
-    const configText = configTextarea.value;
-    
-    if (!configText.trim()) {
-      showStatus('No configuration to export', 'error');
-      return;
-    }
-
-    const blob = new Blob([configText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'lyx-hotkeys.bind';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    
-    URL.revokeObjectURL(url);
-    showStatus('Configuration exported successfully', 'success');
-  }
-
-  function showStatus(message, type) {
-    statusMessage.textContent = message;
-    statusMessage.className = `status-message status-${type}`;
-    statusMessage.classList.remove('hidden');
-    
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-      statusMessage.classList.add('hidden');
-    }, 5000);
-  }
-
-  // Mac key preference functions
-  async function saveMacKeyPreference(preference) {
+  /**
+   * Save Mac key preference
+   */
+  async saveMacKeyPreference(preference) {
     try {
       await chrome.storage.local.set({ macMMapping: preference });
-      showStatus(`Mac key mapping preference saved: ${preference === 'ctrl' ? 'Ctrl' : 'Command'}`, 'success');
+      this.logger.debug(`Mac M mapping preference saved: ${preference}`);
     } catch (error) {
-      console.error('Error saving Mac key preference:', error);
-      showStatus('Error saving preference', 'error');
+      this.logger.error('Failed to save Mac key preference:', error);
     }
   }
 
-  async function loadMacKeyPreference() {
+  /**
+   * Load Mac key preference
+   */
+  async loadMacKeyPreference() {
     try {
       const result = await chrome.storage.local.get(['macMMapping']);
-      const preference = result.macMMapping || 'ctrl'; // Default to ctrl
+      const preference = result.macMMapping || 'ctrl';
       
       const radio = document.querySelector(`input[name="macMMapping"][value="${preference}"]`);
       if (radio) {
         radio.checked = true;
       }
-    } catch (error) {
-      console.error('Error loading Mac key preference:', error);
-    }
-  }
-
-  async function reparseWithMacPreference() {
-    try {
-      const result = await chrome.storage.local.get(['config', 'macMMapping']);
-      if (result.config) {
-        const preference = result.macMMapping || 'ctrl';
-        const parser = new LyXConfigParser();
-        
-        // Parse with Mac preference
-        const options = {
-          mapMetaToCtrl: preference === 'ctrl'
-        };
-        
-        console.log(`🔄 Reparsing with preference: ${preference}`, options);
-        const mappings = parser.parse(result.config, options);
-        
-        // Debug: Log some key mappings to see what we got after reparse
-        console.log(`🔍 Sample mappings after reparse:`);
-        let count = 0;
-        for (const [key, action] of mappings) {
-          if (count < 5 && key.includes('m')) { // Focus on M- keys
-            console.log(`  "${key}" → ${action.type}: ${action.action || action.text || 'unknown'}`);
-            count++;
-          }
-        }
-        
-        const mappingsObj = Object.fromEntries(mappings);
-        
-        // Update storage and display
-        await chrome.storage.local.set({ hotkeyMappings: mappingsObj });
-        currentMappings = mappings;
-        await displayHotkeyList();
-        
-        // Notify background script
-        chrome.runtime.sendMessage({ 
-          action: 'updateMappings', 
-          mappings: mappingsObj 
-        });
-        
-        showStatus('Configuration reloaded with new Mac key preference', 'success');
-      }
-    } catch (error) {
-      console.error('Error reparsing with Mac preference:', error);
-      showStatus('Error updating configuration', 'error');
-    }
-  }
-
-  // Sequence timeout functions
-  async function saveSequenceTimeout(timeout) {
-    try {
-      await chrome.storage.local.set({ sequenceTimeout: timeout });
       
-      // Notify background script and all tabs
-      chrome.runtime.sendMessage({ 
-        action: 'updateSequenceTimeout', 
-        timeout: timeout 
-      });
-      
-      console.log(`Sequence timeout saved: ${timeout}ms`);
+      this.logger.debug(`Mac M mapping preference loaded: ${preference}`);
+      return preference;
     } catch (error) {
-      console.error('Error saving sequence timeout:', error);
-      showStatus('Error saving timeout setting', 'error');
+      this.logger.error('Failed to load Mac key preference:', error);
+      return 'ctrl';
     }
   }
 
-  async function loadSequenceTimeout() {
+  /**
+   * Get Mac key preference
+   */
+  async getMacKeyPreference() {
+    try {
+      const result = await chrome.storage.local.get(['macMMapping']);
+      return result.macMMapping || 'ctrl';
+    } catch (error) {
+      this.logger.error('Failed to get Mac key preference:', error);
+      return 'ctrl';
+    }
+  }
+
+  /**
+   * Save sequence timeout
+   */
+  saveSequenceTimeout(timeout) {
+    chrome.runtime.sendMessage({
+      action: 'updateSequenceTimeout',
+      timeout: timeout
+    });
+    this.logger.debug(`Sequence timeout saved: ${timeout}ms`);
+  }
+
+  /**
+   * Load sequence timeout
+   */
+  async loadSequenceTimeout() {
     try {
       const result = await chrome.storage.local.get(['sequenceTimeout']);
-      const timeout = result.sequenceTimeout || 1000; // Default 1000ms
+      const timeout = result.sequenceTimeout || 1000;
       
-      const slider = document.getElementById('sequenceTimeout');
-      const display = document.getElementById('timeoutValue');
-      
-      if (slider && display) {
-        slider.value = timeout;
-        display.textContent = `${timeout}ms`;
+      if (this.elements.sequenceTimeoutSlider) {
+        this.elements.sequenceTimeoutSlider.value = timeout;
       }
+      if (this.elements.timeoutValueDisplay) {
+        this.elements.timeoutValueDisplay.textContent = `${timeout}ms`;
+      }
+      
+      this.logger.debug(`Sequence timeout loaded: ${timeout}ms`);
     } catch (error) {
-      console.error('Error loading sequence timeout:', error);
+      this.logger.error('Failed to load sequence timeout:', error);
     }
   }
-});
+}
