@@ -3,13 +3,17 @@
  * Centralized message handling between background, content, and popup scripts
  */
 
-// Import logger if available
-let logger;
-if (typeof window !== 'undefined' && window.LyXLogger) {
-  logger = window.LyXLogger.getLogger('MessageHandler');
-} else if (typeof importScripts === 'function') {
-  // Service worker context - will be initialized after logger import
-  logger = { info: console.log, warn: console.warn, error: console.error, debug: console.log };
+// Get logger from global namespace - avoid variable declaration conflicts
+function getLogger() {
+  if (typeof window !== 'undefined' && window.LyXLogger) {
+    return window.LyXLogger.getLogger('MessageHandler');
+  } else if (typeof self !== 'undefined' && self.LyXLogger) {
+    // Service worker context
+    return self.LyXLogger.getLogger('MessageHandler');
+  } else {
+    // Fallback logger
+    return { info: console.log, warn: console.warn, error: console.error, debug: console.log, trace: console.log };
+  }
 }
 
 /**
@@ -57,7 +61,7 @@ class MessageHandler {
     this._setupDefaultHandlers();
     this._setupMessageListener();
     
-    logger?.debug('MessageHandler initialized', { isBackground: this.isBackground });
+    getLogger().debug('MessageHandler initialized', { isBackground: this.isBackground });
   }
 
   /**
@@ -65,7 +69,7 @@ class MessageHandler {
    */
   setStateManager(stateManager) {
     this.stateManager = stateManager;
-    logger?.debug('State manager set');
+    getLogger().debug('State manager set');
   }
 
   /**
@@ -73,7 +77,7 @@ class MessageHandler {
    */
   registerHandler(messageType, handler) {
     this.handlers.set(messageType, handler);
-    logger?.debug(`Handler registered for: ${messageType}`);
+    getLogger().debug(`Handler registered for: ${messageType}`);
   }
 
   /**
@@ -81,7 +85,7 @@ class MessageHandler {
    */
   unregisterHandler(messageType) {
     this.handlers.delete(messageType);
-    logger?.debug(`Handler unregistered for: ${messageType}`);
+    getLogger().debug(`Handler unregistered for: ${messageType}`);
   }
 
   /**
@@ -92,15 +96,15 @@ class MessageHandler {
       try {
         chrome.runtime.sendMessage(message, (response) => {
           if (chrome.runtime.lastError) {
-            logger?.error('Message to background failed:', chrome.runtime.lastError);
+            getLogger().error('Message to background failed:', chrome.runtime.lastError);
             reject(chrome.runtime.lastError);
           } else {
-            logger?.trace('Message to background sent:', message.action);
+            getLogger().trace('Message to background sent:', message.action);
             resolve(response);
           }
         });
       } catch (error) {
-        logger?.error('Failed to send message to background:', error);
+        getLogger().error('Failed to send message to background:', error);
         reject(error);
       }
     });
@@ -111,7 +115,7 @@ class MessageHandler {
    */
   async sendToAllTabs(message) {
     if (!this.isBackground) {
-      logger?.warn('sendToAllTabs called from non-background context');
+      getLogger().warn('sendToAllTabs called from non-background context');
       return [];
     }
 
@@ -120,7 +124,7 @@ class MessageHandler {
       const promises = tabs.map(tab => this.sendToTab(tab.id, message));
       return await Promise.allSettled(promises);
     } catch (error) {
-      logger?.error('Failed to send message to all tabs:', error);
+      getLogger().error('Failed to send message to all tabs:', error);
       return [];
     }
   }
@@ -134,15 +138,15 @@ class MessageHandler {
         chrome.tabs.sendMessage(tabId, message, (response) => {
           if (chrome.runtime.lastError) {
             // Don't log errors for tabs that can't receive messages
-            logger?.trace(`Tab ${tabId} couldn't receive message:`, chrome.runtime.lastError.message);
+            getLogger().trace(`Tab ${tabId} couldn't receive message:`, chrome.runtime.lastError.message);
             resolve(null);
           } else {
-            logger?.trace(`Message sent to tab ${tabId}:`, message.action);
+            getLogger().trace(`Message sent to tab ${tabId}:`, message.action);
             resolve(response);
           }
         });
       } catch (error) {
-        logger?.trace(`Failed to send message to tab ${tabId}:`, error);
+        getLogger().trace(`Failed to send message to tab ${tabId}:`, error);
         resolve(null);
       }
     });
@@ -154,7 +158,7 @@ class MessageHandler {
   async handleMessage(request, sender, sendResponse) {
     const { action } = request;
     
-    logger?.trace('Message received:', action, request);
+    getLogger().trace('Message received:', action, request);
 
     try {
       // Check for registered handler first
@@ -170,7 +174,7 @@ class MessageHandler {
       sendResponse(result);
       
     } catch (error) {
-      logger?.error(`Error handling message ${action}:`, error);
+      getLogger().error(`Error handling message ${action}:`, error);
       sendResponse({ 
         success: false, 
         error: error.message || 'Unknown error' 
@@ -289,7 +293,7 @@ class MessageHandler {
         throw new Error('Invalid config or state manager not available');
         
       default:
-        logger?.warn(`Unhandled message type: ${action}`);
+        getLogger().warn(`Unhandled message type: ${action}`);
         return { success: false, error: `Unknown action: ${action}` };
     }
   }
@@ -312,7 +316,7 @@ class MessageHandler {
         action = MESSAGE_TYPES.SEQUENCE_TIMEOUT_UPDATED;
         break;
       default:
-        logger?.debug(`No broadcast action for change type: ${changeType}`);
+        getLogger().debug(`No broadcast action for change type: ${changeType}`);
         return;
     }
     
@@ -370,6 +374,14 @@ if (typeof module !== 'undefined' && module.exports) {
 } else if (typeof window !== 'undefined') {
   // Browser global
   window.LyXMessageHandler = {
+    MessageHandler,
+    MESSAGE_TYPES,
+    getMessageHandler,
+    initializeMessageHandler
+  };
+} else if (typeof self !== 'undefined') {
+  // Service worker global
+  self.LyXMessageHandler = {
     MessageHandler,
     MESSAGE_TYPES,
     getMessageHandler,

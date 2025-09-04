@@ -342,4 +342,6 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = LyXConfigParser;
 } else if (typeof window !== 'undefined') {
   window.LyXConfigParser = LyXConfigParser;
+} else if (typeof self !== 'undefined') {
+  self.LyXConfigParser = LyXConfigParser;
 }

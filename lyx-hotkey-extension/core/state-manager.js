@@ -3,13 +3,17 @@
  * Centralized state management with reactive updates
  */
 
-// Import logger if available
-let logger;
-if (typeof window !== 'undefined' && window.LyXLogger) {
-  logger = window.LyXLogger.getLogger('StateManager');
-} else if (typeof importScripts === 'function') {
-  // Service worker context - will be initialized after logger import
-  logger = { info: console.log, warn: console.warn, error: console.error, debug: console.log };
+// Get logger from global namespace - avoid variable declaration conflicts
+function getLogger() {
+  if (typeof window !== 'undefined' && window.LyXLogger) {
+    return window.LyXLogger.getLogger('StateManager');
+  } else if (typeof self !== 'undefined' && self.LyXLogger) {
+    // Service worker context
+    return self.LyXLogger.getLogger('StateManager');
+  } else {
+    // Fallback logger
+    return { info: console.log, warn: console.warn, error: console.error, debug: console.log };
+  }
 }
 
 /**
@@ -34,7 +38,7 @@ class ExtensionStateManager {
     this.listeners = new Map();
     this.initialized = false;
     
-    logger?.debug('StateManager initialized');
+    getLogger().debug('StateManager initialized');
   }
 
   /**
@@ -70,7 +74,7 @@ class ExtensionStateManager {
       }
       
       this.initialized = true;
-      logger?.info('State initialized from storage', {
+      getLogger().info('State initialized from storage', {
         enabled: this.state.enabled,
         mappingsCount: this.state.hotkeyMappings.size,
         sequenceTimeout: this.state.sequenceTimeout
@@ -79,7 +83,7 @@ class ExtensionStateManager {
       this._notifyListeners('initialized', this.state);
       
     } catch (error) {
-      logger?.error('Failed to initialize state from storage:', error);
+      getLogger().error('Failed to initialize state from storage:', error);
       this.initialized = true; // Mark as initialized even on error
     }
   }
@@ -113,7 +117,7 @@ class ExtensionStateManager {
     this.state.enabled = !this.state.enabled;
     
     await this._persistState('enabled', this.state.enabled);
-    logger?.info(`Extension ${this.state.enabled ? 'enabled' : 'disabled'}`);
+    getLogger().info(`Extension ${this.state.enabled ? 'enabled' : 'disabled'}`);
     
     this._notifyListeners('enabledChanged', {
       enabled: this.state.enabled,
@@ -133,7 +137,7 @@ class ExtensionStateManager {
     this.state.enabled = enabled;
     
     await this._persistState('enabled', enabled);
-    logger?.info(`Extension ${enabled ? 'enabled' : 'disabled'}`);
+    getLogger().info(`Extension ${enabled ? 'enabled' : 'disabled'}`);
     
     this._notifyListeners('enabledChanged', {
       enabled,
@@ -164,7 +168,7 @@ class ExtensionStateManager {
     const mappingsObject = Object.fromEntries(this.state.hotkeyMappings);
     await this._persistState('hotkeyMappings', mappingsObject);
     
-    logger?.info(`Mappings updated: ${oldSize} → ${this.state.hotkeyMappings.size} entries`);
+    getLogger().info(`Mappings updated: ${oldSize} → ${this.state.hotkeyMappings.size} entries`);
     
     this._notifyListeners('mappingsChanged', {
       mappings: Object.fromEntries(this.state.hotkeyMappings),
@@ -188,7 +192,7 @@ class ExtensionStateManager {
     this.state.config = config;
     
     await this._persistState('config', config);
-    logger?.debug('Configuration updated');
+    getLogger().debug('Configuration updated');
     
     this._notifyListeners('configChanged', {
       config,
@@ -211,7 +215,7 @@ class ExtensionStateManager {
     this.state.sequenceTimeout = timeout;
     
     await this._persistState('sequenceTimeout', timeout);
-    logger?.debug(`Sequence timeout updated: ${timeout}ms`);
+    getLogger().debug(`Sequence timeout updated: ${timeout}ms`);
     
     this._notifyListeners('sequenceTimeoutChanged', {
       timeout,
@@ -234,7 +238,7 @@ class ExtensionStateManager {
     this.state.macMMapping = mapping;
     
     await this._persistState('macMMapping', mapping);
-    logger?.debug(`Mac M mapping updated: ${mapping}`);
+    getLogger().debug(`Mac M mapping updated: ${mapping}`);
     
     this._notifyListeners('macMappingChanged', {
       mapping,
@@ -257,7 +261,7 @@ class ExtensionStateManager {
     this.state.loggerConfig = { ...this.state.loggerConfig, ...config };
     
     await this._persistState('loggerConfig', this.state.loggerConfig);
-    logger?.debug('Logger configuration updated', config);
+    getLogger().debug('Logger configuration updated', config);
     
     this._notifyListeners('loggerConfigChanged', {
       config: this.state.loggerConfig,
@@ -274,7 +278,7 @@ class ExtensionStateManager {
     }
     this.listeners.get(event).add(callback);
     
-    logger?.debug(`Listener added for event: ${event}`);
+    getLogger().debug(`Listener added for event: ${event}`);
   }
 
   /**
@@ -293,7 +297,7 @@ class ExtensionStateManager {
     try {
       await chrome.storage.local.set({ [key]: value });
     } catch (error) {
-      logger?.error(`Failed to persist state for ${key}:`, error);
+      getLogger().error(`Failed to persist state for ${key}:`, error);
     }
   }
 
@@ -306,7 +310,7 @@ class ExtensionStateManager {
         try {
           callback(data);
         } catch (error) {
-          logger?.error(`Error in state listener for ${event}:`, error);
+          getLogger().error(`Error in state listener for ${event}:`, error);
         }
       });
     }
@@ -316,7 +320,7 @@ class ExtensionStateManager {
    * Reset to default state
    */
   async reset() {
-    logger?.info('Resetting state to defaults');
+    getLogger().info('Resetting state to defaults');
     
     this.state = {
       enabled: true,
@@ -372,6 +376,13 @@ if (typeof module !== 'undefined' && module.exports) {
 } else if (typeof window !== 'undefined') {
   // Browser global
   window.LyXStateManager = {
+    ExtensionStateManager,
+    getStateManager,
+    initializeStateManager
+  };
+} else if (typeof self !== 'undefined') {
+  // Service worker global
+  self.LyXStateManager = {
     ExtensionStateManager,
     getStateManager,
     initializeStateManager
