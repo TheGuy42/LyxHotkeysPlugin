@@ -3,14 +3,22 @@
  * Centralized message handling between background, content, and popup scripts
  */
 
-// Import logger if available
-let logger;
-if (typeof window !== 'undefined' && window.LyXLogger) {
-  logger = window.LyXLogger.getLogger('MessageHandler');
-} else if (typeof importScripts === 'function') {
-  // Service worker context - will be initialized after logger import
-  logger = { info: console.log, warn: console.warn, error: console.error, debug: console.log };
-}
+// Import logger if available (scoped to avoid conflicts)
+(function() {
+  let logger;
+  if (typeof window !== 'undefined' && window.LyXLogger) {
+    logger = window.LyXLogger.getLogger('MessageHandler');
+  } else if (typeof importScripts === 'function') {
+    // Service worker context - will be initialized after logger import
+    logger = { info: console.log, warn: console.warn, error: console.error, debug: console.log };
+  }
+  
+  // Make logger available to the rest of the script
+  window.messageHandlerLogger = logger;
+})();
+
+// Use the scoped logger throughout this file
+const msgLogger = window.messageHandlerLogger;
 
 /**
  * Message types for type safety and clarity
@@ -57,7 +65,7 @@ class MessageHandler {
     this._setupDefaultHandlers();
     this._setupMessageListener();
     
-    logger?.debug('MessageHandler initialized', { isBackground: this.isBackground });
+    msgLogger?.debug('MessageHandler initialized', { isBackground: this.isBackground });
   }
 
   /**
@@ -65,7 +73,7 @@ class MessageHandler {
    */
   setStateManager(stateManager) {
     this.stateManager = stateManager;
-    logger?.debug('State manager set');
+    msgLogger?.debug('State manager set');
   }
 
   /**
@@ -73,7 +81,7 @@ class MessageHandler {
    */
   registerHandler(messageType, handler) {
     this.handlers.set(messageType, handler);
-    logger?.debug(`Handler registered for: ${messageType}`);
+    msgLogger?.debug(`Handler registered for: ${messageType}`);
   }
 
   /**
@@ -81,7 +89,7 @@ class MessageHandler {
    */
   unregisterHandler(messageType) {
     this.handlers.delete(messageType);
-    logger?.debug(`Handler unregistered for: ${messageType}`);
+    msgLogger?.debug(`Handler unregistered for: ${messageType}`);
   }
 
   /**
@@ -92,15 +100,15 @@ class MessageHandler {
       try {
         chrome.runtime.sendMessage(message, (response) => {
           if (chrome.runtime.lastError) {
-            logger?.error('Message to background failed:', chrome.runtime.lastError);
+            msgLogger?.error('Message to background failed:', chrome.runtime.lastError);
             reject(chrome.runtime.lastError);
           } else {
-            logger?.trace('Message to background sent:', message.action);
+            msgLogger?.trace('Message to background sent:', message.action);
             resolve(response);
           }
         });
       } catch (error) {
-        logger?.error('Failed to send message to background:', error);
+        msgLogger?.error('Failed to send message to background:', error);
         reject(error);
       }
     });
@@ -111,7 +119,7 @@ class MessageHandler {
    */
   async sendToAllTabs(message) {
     if (!this.isBackground) {
-      logger?.warn('sendToAllTabs called from non-background context');
+      msgLogger?.warn('sendToAllTabs called from non-background context');
       return [];
     }
 
@@ -120,7 +128,7 @@ class MessageHandler {
       const promises = tabs.map(tab => this.sendToTab(tab.id, message));
       return await Promise.allSettled(promises);
     } catch (error) {
-      logger?.error('Failed to send message to all tabs:', error);
+      msgLogger?.error('Failed to send message to all tabs:', error);
       return [];
     }
   }
@@ -134,15 +142,15 @@ class MessageHandler {
         chrome.tabs.sendMessage(tabId, message, (response) => {
           if (chrome.runtime.lastError) {
             // Don't log errors for tabs that can't receive messages
-            logger?.trace(`Tab ${tabId} couldn't receive message:`, chrome.runtime.lastError.message);
+            msgLogger?.trace(`Tab ${tabId} couldn't receive message:`, chrome.runtime.lastError.message);
             resolve(null);
           } else {
-            logger?.trace(`Message sent to tab ${tabId}:`, message.action);
+            msgLogger?.trace(`Message sent to tab ${tabId}:`, message.action);
             resolve(response);
           }
         });
       } catch (error) {
-        logger?.trace(`Failed to send message to tab ${tabId}:`, error);
+        msgLogger?.trace(`Failed to send message to tab ${tabId}:`, error);
         resolve(null);
       }
     });
@@ -154,7 +162,7 @@ class MessageHandler {
   async handleMessage(request, sender, sendResponse) {
     const { action } = request;
     
-    logger?.trace('Message received:', action, request);
+    msgLogger?.trace('Message received:', action, request);
 
     try {
       // Check for registered handler first
@@ -170,7 +178,7 @@ class MessageHandler {
       sendResponse(result);
       
     } catch (error) {
-      logger?.error(`Error handling message ${action}:`, error);
+      msgLogger?.error(`Error handling message ${action}:`, error);
       sendResponse({ 
         success: false, 
         error: error.message || 'Unknown error' 
@@ -289,7 +297,7 @@ class MessageHandler {
         throw new Error('Invalid config or state manager not available');
         
       default:
-        logger?.warn(`Unhandled message type: ${action}`);
+        msgLogger?.warn(`Unhandled message type: ${action}`);
         return { success: false, error: `Unknown action: ${action}` };
     }
   }
@@ -312,7 +320,7 @@ class MessageHandler {
         action = MESSAGE_TYPES.SEQUENCE_TIMEOUT_UPDATED;
         break;
       default:
-        logger?.debug(`No broadcast action for change type: ${changeType}`);
+        msgLogger?.debug(`No broadcast action for change type: ${changeType}`);
         return;
     }
     

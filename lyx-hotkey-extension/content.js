@@ -4,14 +4,15 @@
  */
 
 // Import required modules (these will be available as globals after script loading)
-let logger, keyDetector, actionExecutor, mappingManager;
+// Use unique variable names to avoid conflicts between content scripts
+let contentLogger, keyDetector, actionExecutor, mappingManager;
 
 // Initialize modules after DOM is ready
 function initializeModules() {
-  logger = LyXLogger.getLogger('Content');
-  keyDetector = new LyXKeyDetector.KeyDetector(logger.child('KeyDetector'));
-  actionExecutor = new LyXActionExecutor.ActionExecutor(logger.child('ActionExecutor'));
-  mappingManager = new LyXMappingManager.MappingManager(logger.child('MappingManager'));
+  contentLogger = LyXLogger.getLogger('Content');
+  keyDetector = new LyXKeyDetector.KeyDetector(contentLogger.child('KeyDetector'));
+  actionExecutor = new LyXActionExecutor.ActionExecutor(contentLogger.child('ActionExecutor'));
+  mappingManager = new LyXMappingManager.MappingManager(contentLogger.child('MappingManager'));
 }
 
 /**
@@ -19,12 +20,12 @@ function initializeModules() {
  */
 class LyXHotkeyHandler {
   constructor() {
-    logger.info('🏗️ Initializing LyXHotkeyHandler...');
+    contentLogger.info('🏗️ Initializing LyXHotkeyHandler...');
     
     this.enabled = true;
     this.feedbackElements = new Set();
     
-    logger.debug('🔧 Starting initialization...');
+    contentLogger.debug('🔧 Starting initialization...');
     this.init();
   }
 
@@ -41,7 +42,7 @@ class LyXHotkeyHandler {
     // Set up event listeners
     this._setupEventListeners();
     
-    logger.info('✅ LyXHotkeyHandler initialized successfully');
+    contentLogger.info('✅ LyXHotkeyHandler initialized successfully');
   }
 
   /**
@@ -64,10 +65,10 @@ class LyXHotkeyHandler {
             break;
             
           default:
-            logger.debug(`Unhandled message: ${request.action}`);
+            contentLogger.debug(`Unhandled message: ${request.action}`);
         }
       } catch (error) {
-        logger.error('Error handling message:', error, request);
+        contentLogger.error('Error handling message:', error, request);
       }
     });
   }
@@ -78,7 +79,7 @@ class LyXHotkeyHandler {
   _requestInitialState() {
     chrome.runtime.sendMessage({ action: 'getState' }, (response) => {
       if (chrome.runtime.lastError) {
-        logger.warn('Failed to get state from background:', chrome.runtime.lastError);
+        contentLogger.warn('Failed to get state from background:', chrome.runtime.lastError);
         // Retry after a short delay
         setTimeout(() => this._requestInitialState(), 1000);
         return;
@@ -88,12 +89,12 @@ class LyXHotkeyHandler {
         this.enabled = response.enabled;
         if (response.mappings && typeof response.mappings === 'object') {
           mappingManager.setMappings(response.mappings);
-          logger.info(`Extension initialized: ${this.enabled ? 'enabled' : 'disabled'}, ${Object.keys(response.mappings).length} mappings`);
+          contentLogger.info(`Extension initialized: ${this.enabled ? 'enabled' : 'disabled'}, ${Object.keys(response.mappings).length} mappings`);
         } else {
-          logger.warn('No valid mappings in response:', response);
+          contentLogger.warn('No valid mappings in response:', response);
         }
       } else {
-        logger.warn('No response from background script');
+        contentLogger.warn('No response from background script');
       }
     });
   }
@@ -109,7 +110,7 @@ class LyXHotkeyHandler {
     // Focus tracking
     document.addEventListener('focusin', (e) => this._handleFocus(e), true);
     
-    logger.debug('Event listeners set up');
+    contentLogger.debug('Event listeners set up');
   }
 
   /**
@@ -117,7 +118,7 @@ class LyXHotkeyHandler {
    */
   _handleExtensionToggled(enabled) {
     this.enabled = enabled;
-    logger.info(`Extension ${enabled ? 'enabled' : 'disabled'}`);
+    contentLogger.info(`Extension ${enabled ? 'enabled' : 'disabled'}`);
     
     if (!enabled) {
       // Clear any active sequences when disabled
@@ -132,9 +133,9 @@ class LyXHotkeyHandler {
   _handleMappingsUpdated(mappings) {
     if (mappings && typeof mappings === 'object') {
       mappingManager.setMappings(mappings);
-      logger.info(`Mappings updated: ${Object.keys(mappings).length} entries`);
+      contentLogger.info(`Mappings updated: ${Object.keys(mappings).length} entries`);
     } else {
-      logger.warn('Invalid mappings received:', mappings);
+      contentLogger.warn('Invalid mappings received:', mappings);
     }
   }
 
@@ -144,7 +145,7 @@ class LyXHotkeyHandler {
   _handleSequenceTimeoutUpdated(timeout) {
     if (timeout && typeof timeout === 'number') {
       keyDetector.setSequenceTimeout(timeout);
-      logger.debug(`Sequence timeout updated to ${timeout}ms`);
+      contentLogger.debug(`Sequence timeout updated to ${timeout}ms`);
     }
   }
 
@@ -153,7 +154,7 @@ class LyXHotkeyHandler {
    */
   _handleFocus(event) {
     if (this._isEditableElement(event.target)) {
-      logger.trace('Focus on editable element:', event.target.tagName);
+      contentLogger.trace('Focus on editable element:', event.target.tagName);
     }
   }
 
@@ -171,11 +172,11 @@ class LyXHotkeyHandler {
     const keyResult = keyDetector.processKeyDown(event);
     if (!keyResult.combo) return;
 
-    logger.debug(`Processing key combo: "${keyResult.combo}"`);
+    contentLogger.debug(`Processing key combo: "${keyResult.combo}"`);
 
     // Add to sequence
     const sequence = keyDetector.addToSequence(keyResult.combo);
-    logger.debug(`Current sequence: "${sequence}"`);
+    contentLogger.debug(`Current sequence: "${sequence}"`);
 
     // Check for matches
     const matchResult = mappingManager.hasMatch(sequence);
@@ -186,7 +187,7 @@ class LyXHotkeyHandler {
         event.preventDefault();
         event.stopPropagation();
         
-        logger.info(`🎯 Executing action for sequence: "${sequence}"`);
+        contentLogger.info(`🎯 Executing action for sequence: "${sequence}"`);
         this._executeActionWithFeedback(matchResult.action, keyResult.element, sequence);
         keyDetector.clearSequence();
         
@@ -196,12 +197,12 @@ class LyXHotkeyHandler {
         event.stopPropagation();
         
         this._showSequenceFeedback(sequence, matchResult.matches);
-        logger.debug(`Partial match for "${sequence}", waiting for more keys...`);
+        contentLogger.debug(`Partial match for "${sequence}", waiting for more keys...`);
       }
     } else {
       // No match found
       if (keyDetector.hasSequence()) {
-        logger.debug(`No match for sequence "${sequence}", clearing`);
+        contentLogger.debug(`No match for sequence "${sequence}", clearing`);
         keyDetector.clearSequence();
         this._clearAllFeedback();
       }
@@ -226,13 +227,13 @@ class LyXHotkeyHandler {
       
       if (success) {
         this._showActionFeedback(sequence, action, 'success');
-        logger.info(`✅ Action executed successfully: ${action.type}`);
+        contentLogger.info(`✅ Action executed successfully: ${action.type}`);
       } else {
         this._showActionFeedback(sequence, action, 'error');
-        logger.warn(`❌ Action execution failed: ${action.type}`);
+        contentLogger.warn(`❌ Action execution failed: ${action.type}`);
       }
     } catch (error) {
-      logger.error('Error executing action:', error);
+      contentLogger.error('Error executing action:', error);
       this._showActionFeedback(sequence, action, 'error');
     }
   }
