@@ -182,25 +182,42 @@ class OptionsController {
    */
   async handleFileUpload(file) {
     try {
-      const fileData = await this.uiUtils.handleFileUpload(
-        { files: [file] }, 
-        {
-          maxSize: 1024 * 1024, // 1MB
-          allowedTypes: ['text/plain', 'application/octet-stream'],
-          readAs: 'text'
-        }
-      );
+      // Validate file extension instead of MIME type (like the old version)
+      if (!file.name.endsWith('.bind') && !file.name.endsWith('.txt')) {
+        throw new Error('Please select a .bind or .txt file');
+      }
+
+      // Validate file size
+      const maxSize = 1024 * 1024; // 1MB
+      if (file.size > maxSize) {
+        throw new Error(`File too large. Maximum size: ${this.uiUtils.formatFileSize(maxSize)}`);
+      }
       
-      this.elements.configTextarea.value = fileData.content;
+      // Read file content directly using FileReader
+      const content = await this.readFileAsText(file);
+      
+      this.elements.configTextarea.value = content;
       await this.parseCurrentConfig();
       
-      this.uiUtils.showStatus(`File "${fileData.name}" loaded successfully`, 'success');
-      this.logger.info(`Config file loaded: ${fileData.name} (${this.uiUtils.formatFileSize(fileData.size)})`);
+      this.uiUtils.showStatus(`File "${file.name}" loaded successfully`, 'success');
+      this.logger.info(`Config file loaded: ${file.name} (${this.uiUtils.formatFileSize(file.size)})`);
       
     } catch (error) {
       this.logger.error('Failed to handle file upload:', error);
       this.uiUtils.showStatus(`Failed to load file: ${error.message}`, 'error');
     }
+  }
+
+  /**
+   * Read file as text using FileReader
+   */
+  readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsText(file);
+    });
   }
 
   /**
