@@ -1,11 +1,8 @@
-/**
- * Content Script for LyX Hotkey Extension
- * Handles hotkey detection and text insertion in web pages
- */
+const logger = new Logger('content-script');
 
 class LyXHotkeyHandler {
   constructor() {
-    console.log('🏗️ LyX Extension: Initializing LyXHotkeyHandler...');
+    logger.info('Initializing LyXHotkeyHandler...');
     this.enabled = true;
     this.mappings = new Map();
     this.keySequence = [];
@@ -13,36 +10,36 @@ class LyXHotkeyHandler {
     this.sequenceTimeoutDuration = 1000; // 1 second timeout for sequences
     this.lastActiveElement = null;
     
-    console.log('🔧 LyX Extension: Starting initialization...');
     this.init();
   }
 
   init() {
     // Listen for messages from background script
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      logger.debug('Message received:', request);
       try {
         switch (request.action) {
-          case 'extensionToggled':
+          case MESSAGE_ACTIONS.EXTENSION_TOGGLED:
             this.enabled = request.enabled;
-            console.log(`LyX Extension ${this.enabled ? 'enabled' : 'disabled'}`);
+            logger.info(`Extension ${this.enabled ? 'enabled' : 'disabled'}`);
             break;
-          case 'mappingsUpdated':
+          case MESSAGE_ACTIONS.MAPPINGS_UPDATED:
             if (request.mappings && typeof request.mappings === 'object') {
               this.mappings = new Map(Object.entries(request.mappings));
-              console.log(`LyX Extension: Loaded ${this.mappings.size} hotkey mappings`);
+              logger.info(`Loaded ${this.mappings.size} hotkey mappings`);
             } else {
-              console.warn('LyX Extension: Invalid mappings received:', request.mappings);
+              logger.warn('Invalid mappings received:', request.mappings);
             }
             break;
-          case 'sequenceTimeoutUpdated':
+          case MESSAGE_ACTIONS.SEQUENCE_TIMEOUT_UPDATED:
             if (request.timeout && typeof request.timeout === 'number') {
               this.sequenceTimeoutDuration = request.timeout;
-              console.log(`LyX Extension: Sequence timeout updated to ${request.timeout}ms`);
+              logger.info(`Sequence timeout updated to ${request.timeout}ms`);
             }
             break;
         }
       } catch (error) {
-        console.error('LyX Extension: Error handling message:', error, request);
+        logger.error('Error handling message:', error, request);
       }
     });
 
@@ -54,9 +51,9 @@ class LyXHotkeyHandler {
   }
 
   requestInitialState() {
-    chrome.runtime.sendMessage({ action: 'getState' }, (response) => {
+    chrome.runtime.sendMessage({ action: MESSAGE_ACTIONS.GET_STATE }, (response) => {
       if (chrome.runtime.lastError) {
-        console.warn('LyX Extension: Failed to get state from background:', chrome.runtime.lastError);
+        logger.warn('Failed to get state from background:', chrome.runtime.lastError.message);
         // Retry after a short delay
         setTimeout(() => this.requestInitialState(), 1000);
         return;
@@ -66,118 +63,90 @@ class LyXHotkeyHandler {
         this.enabled = response.enabled;
         if (response.mappings && typeof response.mappings === 'object') {
           this.mappings = new Map(Object.entries(response.mappings));
-          console.log(`LyX Extension initialized: ${this.enabled ? 'enabled' : 'disabled'}, ${this.mappings.size} mappings`);
+          logger.info(`Initialized: ${this.enabled ? 'enabled' : 'disabled'}, ${this.mappings.size} mappings`);
         } else {
-          console.warn('LyX Extension: No valid mappings in response:', response);
+          logger.warn('No valid mappings in response:', response);
         }
       } else {
-        console.warn('LyX Extension: No response from background script');
+        logger.warn('No response from background script for initial state.');
       }
     });
   }
 
   setupEventListeners() {
-    console.log('🎯 LyX Extension: Setting up event listeners...');
-    document.addEventListener('keydown', (e) => {
-      console.log('🔑 LyX Extension: Keydown detected:', e.key, e.code, 'ctrl:', e.ctrlKey, 'alt:', e.altKey);
-      this.handleKeyDown(e);
-    }, true);
-    document.addEventListener('keyup', (e) => this.handleKeyUp(e), true);
+    logger.debug('Setting up event listeners...');
+    document.addEventListener('keydown', (e) => this.handleKeyDown(e), true);
     document.addEventListener('focus', (e) => this.handleFocus(e), true);
-    console.log('✅ LyX Extension: Event listeners set up successfully');
+    logger.debug('Event listeners set up.');
   }
 
   handleFocus(e) {
-    // Track the currently focused element
     if (this.isEditableElement(e.target)) {
       this.lastActiveElement = e.target;
+      logger.debug('Focused on editable element:', e.target.tagName);
     }
   }
 
   handleKeyDown(e) {
-    if (!this.enabled) {
-      console.log('LyX Extension: Disabled, ignoring keydown');
-      return;
-    }
+    if (!this.enabled) return;
 
-    // Only handle keys when in editable elements
     if (!this.isEditableElement(e.target)) {
-      console.log('LyX Extension: Not in editable element, ignoring keydown');
       return;
     }
 
     const keyCombo = this.getKeyCombo(e);
     if (!keyCombo) {
-      console.log('LyX Extension: No key combo generated, ignoring keydown');
       return;
     }
 
-    console.log(`LyX Extension: Processing key combo: ${keyCombo}`);
-    console.log(`LyX Extension: Current mappings count: ${this.mappings.size}`);
+    logger.debug(`Processing key combo: ${keyCombo}`);
     
-    // Add to current sequence
     this.keySequence.push(keyCombo);
     
-    // Clear any existing timeout
     if (this.sequenceTimeout) {
       clearTimeout(this.sequenceTimeout);
     }
 
-    // Check for matches
     const fullSequence = this.keySequence.join(' ');
-    console.log(`LyX Extension: Full sequence: "${fullSequence}"`);
+    logger.debug(`Full sequence: "${fullSequence}"`);
     
     const action = this.findMatchingAction(fullSequence);
-    console.log(`LyX Extension: Action found:`, action);
 
     if (action) {
-      // Found a complete match - prevent default behavior
-      console.log(`LyX Extension: ✅ Executing action for "${fullSequence}":`, action);
+      logger.info(`Executing action for "${fullSequence}":`, action);
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
       this.executeAction(action, e.target);
       this.clearSequence();
     } else if (this.hasPartialMatch(fullSequence)) {
-      // Partial match, wait for more keys - prevent default behavior
-      console.log(`LyX Extension: 🔄 Partial match for "${fullSequence}", waiting for more keys`);
+      logger.debug(`Partial match for "${fullSequence}", waiting...`);
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
       this.sequenceTimeout = setTimeout(() => {
-        console.log(`LyX Extension: ⏰ Sequence timeout for "${fullSequence}"`);
+        logger.debug(`Sequence timeout for "${fullSequence}"`);
         this.clearSequence();
       }, this.sequenceTimeoutDuration);
     } else {
-      // No match, clear sequence
-      console.log(`LyX Extension: ❌ No match for "${fullSequence}"`);
-      console.log(`LyX Extension: Available mappings:`, Array.from(this.mappings.keys()).slice(0, 10));
+      logger.debug(`No match for "${fullSequence}"`);
       this.clearSequence();
     }
-  }
-
-  handleKeyUp(e) {
-    // Handle any key up events if needed
   }
 
   getKeyCombo(e) {
     const parts = [];
     
-    // Detect platform for proper key mapping
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     
-    // Add modifiers in consistent order
     if (e.ctrlKey) parts.push('ctrl');
     if (e.altKey) parts.push('alt');
     if (e.shiftKey) parts.push('shift');
     if (e.metaKey) parts.push('meta');
 
-    // Get the main key - use code for more reliable detection
     let key = e.key.toLowerCase();
     
-    // For Mac, handle Option key combinations that produce special characters
     if (isMac && e.altKey && !e.ctrlKey && !e.metaKey) {
-      // Use the code property to get the physical key instead of the produced character
       const codeToKey = {
         'KeyA': 'a', 'KeyB': 'b', 'KeyC': 'c', 'KeyD': 'd', 'KeyE': 'e',
         'KeyF': 'f', 'KeyG': 'g', 'KeyH': 'h', 'KeyI': 'i', 'KeyJ': 'j',
@@ -195,7 +164,6 @@ class LyXHotkeyHandler {
       }
     }
     
-    // Normalize special keys
     const keyNormalizations = {
       ' ': 'space',
       'arrowleft': 'left',
@@ -208,7 +176,6 @@ class LyXHotkeyHandler {
     
     key = keyNormalizations[key] || key;
     
-    // Skip modifier-only presses
     if (['control', 'alt', 'shift', 'meta'].includes(key)) {
       return null;
     }
@@ -224,7 +191,6 @@ class LyXHotkeyHandler {
   hasPartialMatch(sequence) {
     for (const key of this.mappings.keys()) {
       if (key.startsWith(sequence + ' ')) {
-        console.log(`🔍 LyX Extension: Partial match found: "${sequence}" matches start of "${key}"`);
         return true;
       }
     }
@@ -240,96 +206,63 @@ class LyXHotkeyHandler {
   }
 
   executeAction(action, element) {
-    console.log(`LyX Extension: 🚀 Starting action execution:`, action);
-    console.log(`LyX Extension: Target element:`, element.tagName, element.type, element.className);
-    
+    logger.debug(`Executing action:`, action, `on element:`, element);
     try {
       switch (action.type) {
         case 'insert':
-          console.log(`LyX Extension: Inserting text: "${action.text}"`);
           this.insertText(action.text, element);
           break;
         case 'wrap':
-          console.log(`LyX Extension: Wrapping with: "${action.before}" ... "${action.after}"`);
           this.wrapSelection(action.before, action.after, element);
           break;
         case 'navigation':
-          console.log(`LyX Extension: Navigation action: ${action.action}`);
           this.handleNavigation(action.action, element);
           break;
         case 'selection':
-          console.log(`LyX Extension: Selection action: ${action.action}`);
           this.handleSelection(action.action, element);
           break;
         case 'delete':
-          console.log(`LyX Extension: Delete action: ${action.action}`);
           this.handleDeletion(action.action, element);
           break;
         case 'clipboard':
-          console.log(`LyX Extension: Clipboard action: ${action.action}`);
           this.handleClipboard(action.action, element);
           break;
         case 'edit':
-          console.log(`LyX Extension: Edit action: ${action.action}`);
           this.handleEdit(action.action, element);
           break;
         default:
-          console.warn('LyX Extension: Unknown action type:', action.type);
+          logger.warn('Unknown action type:', action.type);
       }
-      console.log(`LyX Extension: ✅ Action execution completed successfully`);
     } catch (error) {
-      console.error('LyX Extension: ❌ Error executing action:', error, action);
-      // Don't let errors break the extension state
+      logger.error('Error executing action:', error, action);
     }
   }
 
   insertText(text, element) {
-    console.log(`LyX Extension: 📝 insertText called with text: "${text}"`);
-    console.log(`LyX Extension: Element check - isEditable: ${this.isEditableElement(element)}`);
-    
     if (!this.isEditableElement(element)) {
-      console.warn(`LyX Extension: ❌ Element not editable, cannot insert text`);
+      logger.warn(`Element not editable, cannot insert text.`);
       return;
     }
 
-    console.log(`LyX Extension: Element type: ${element.tagName}, contentEditable: ${element.isContentEditable}`);
-    
     if (element.isContentEditable) {
-      console.log(`LyX Extension: Using contentEditable insertion`);
       this.insertInContentEditable(text, element);
     } else {
-      console.log(`LyX Extension: Using form field insertion`);
       this.insertInFormField(text, element);
     }
-    
-    console.log(`LyX Extension: ✅ Text insertion completed`);
   }
 
   insertInFormField(text, element) {
-    console.log(`LyX Extension: 🔤 insertInFormField - text: "${text}"`);
-    
     const start = element.selectionStart;
     const end = element.selectionEnd;
     const value = element.value;
 
-    console.log(`LyX Extension: Cursor position: ${start}-${end}, current value length: ${value.length}`);
-
-    // Insert text at cursor position
     const newValue = value.slice(0, start) + text + value.slice(end);
     element.value = newValue;
 
-    console.log(`LyX Extension: New value set, length: ${newValue.length}`);
-
-    // Position cursor after inserted text
     const newCursorPos = start + text.length;
     element.setSelectionRange(newCursorPos, newCursorPos);
 
-    console.log(`LyX Extension: Cursor positioned at: ${newCursorPos}`);
-
-    // Trigger input event
     element.dispatchEvent(new Event('input', { bubbles: true }));
-    
-    console.log(`LyX Extension: ✅ Form field insertion completed`);
   }
 
   insertInContentEditable(text, element) {
@@ -342,7 +275,6 @@ class LyXHotkeyHandler {
     const textNode = document.createTextNode(text);
     range.insertNode(textNode);
 
-    // Move cursor after inserted text
     range.setStartAfter(textNode);
     range.setEndAfter(textNode);
     selection.removeAllRanges();
@@ -369,7 +301,6 @@ class LyXHotkeyHandler {
     const newValue = value.slice(0, start) + wrappedText + value.slice(end);
     element.value = newValue;
 
-    // Select the wrapped content (without the wrapper)
     const newStart = start + before.length;
     const newEnd = newStart + selectedText.length;
     element.setSelectionRange(newStart, newEnd);
@@ -396,7 +327,6 @@ class LyXHotkeyHandler {
     range.setStartAfter(contentNode);
     range.insertNode(afterNode);
 
-    // Select the content between the wrappers
     range.setStartAfter(beforeNode);
     range.setEndBefore(afterNode);
     selection.removeAllRanges();
@@ -404,7 +334,6 @@ class LyXHotkeyHandler {
   }
 
   handleNavigation(action, element) {
-    // Implement navigation actions
     const actions = {
       moveRight: () => this.moveCursor(element, 1),
       moveLeft: () => this.moveCursor(element, -1),
@@ -429,17 +358,13 @@ class LyXHotkeyHandler {
   }
 
   moveWord(element, direction) {
-    // Simplified word movement - in a real implementation,
-    // you'd want more sophisticated word boundary detection
     const value = element.value;
     let pos = element.selectionStart;
     
     if (direction > 0) {
-      // Move to next word
       while (pos < value.length && /\S/.test(value[pos])) pos++;
       while (pos < value.length && /\s/.test(value[pos])) pos++;
     } else {
-      // Move to previous word
       while (pos > 0 && /\s/.test(value[pos - 1])) pos--;
       while (pos > 0 && /\S/.test(value[pos - 1])) pos--;
     }
@@ -479,12 +404,10 @@ class LyXHotkeyHandler {
   }
 
   handleSelection(action, element) {
-    // Similar to navigation but extends selection
     // Implementation would be similar to navigation but using different end position
   }
 
   handleDeletion(action, element) {
-    // Implement deletion actions
     const actions = {
       deleteRight: () => this.deleteChar(element, 1),
       deleteLeft: () => this.deleteChar(element, -1),
@@ -503,10 +426,8 @@ class LyXHotkeyHandler {
     const end = element.selectionEnd;
     
     if (start !== end) {
-      // Delete selection
       this.deleteSelection(element);
     } else {
-      // Delete single character
       const value = element.value;
       let newStart, newEnd;
       
@@ -526,7 +447,6 @@ class LyXHotkeyHandler {
   }
 
   deleteWord(element, direction) {
-    // Simplified word deletion
     const start = element.selectionStart;
     const value = element.value;
     let pos = start;
@@ -572,14 +492,11 @@ class LyXHotkeyHandler {
   }
 
   handleClipboard(action, element) {
-    // Note: Clipboard operations have limitations in content scripts
-    // These would need to be implemented using the clipboard API or execCommand
     switch (action) {
       case 'copy':
         document.execCommand('copy');
         break;
       case 'paste':
-        // Paste is more complex and might need special handling
         break;
       case 'cut':
         document.execCommand('cut');
@@ -603,7 +520,7 @@ class LyXHotkeyHandler {
     
     const tagName = element.tagName.toLowerCase();
     const editable = element.isContentEditable;
-    const inputTypes = ['text', 'search', 'url', 'tel', 'email', 'password'];
+    const inputTypes = ['text', 'search', 'url', 'tel', 'email', 'password', 'number'];
     
     return editable || 
            tagName === 'textarea' || 
@@ -612,6 +529,6 @@ class LyXHotkeyHandler {
 }
 
 // Initialize the hotkey handler
-console.log('🚀 LyX Extension: Content script loading...');
+logger.info('Content script loading...');
 const lyxHandler = new LyXHotkeyHandler();
-console.log('✅ LyX Extension: Content script initialized successfully');
+logger.info('Content script initialized.');

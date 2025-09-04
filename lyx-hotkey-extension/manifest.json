@@ -15,13 +15,13 @@
   ],
   
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background/main.js"
   },
   
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["src/common/constants.js", "src/common/logger.js", "src/content/main.js"],
       "run_at": "document_idle",
       "all_frames": true,
       "match_about_blank": true
@@ -50,7 +50,7 @@
   
   "web_accessible_resources": [
     {
-      "resources": ["injected.js", "test.html", "debug.html", "test.js", "debug.js"],
+      "resources": ["injected.js", "test.html", "debug.html", "test.js", "src/debug/main.js", "src/common/logger.js"],
       "matches": ["<all_urls>"]
     }
   ]
