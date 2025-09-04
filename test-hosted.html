@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LyX Extension Test - Hosted Version</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-area { 
+            width: 100%; 
+            height: 200px; 
+            border: 2px solid #ccc; 
+            padding: 10px; 
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .status { 
+            padding: 15px; 
+            margin: 20px 0; 
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaba; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>🚀 LyX Extension Test Page</h1>
+    
+    <div id="status" class="status warning">⏳ Checking extension status...</div>
+    
+    <div class="info">
+        <h3>📍 Current URL</h3>
+        <p id="current-url">Loading...</p>
+    </div>
+    
+    <div class="info">
+        <h3>🔍 Extension Detection</h3>
+        <p>This page will automatically detect if the LyX extension content script is loading.</p>
+        <ul>
+            <li>Check the browser console for log messages</li>
+            <li>Look for the green indicator in the top-right corner</li>
+            <li>Test hotkeys in the textarea below</li>
+        </ul>
+    </div>
+    
+    <h2>📝 Test Area</h2>
+    <p>Focus on the textarea below and try these hotkeys:</p>
+    <ul>
+        <li><strong>Ctrl+M</strong> → Should insert $$</li>
+        <li><strong>Ctrl+B</strong> → Should insert ****</li>
+        <li><strong>Ctrl+L A</strong> → Should insert \alpha</li>
+    </ul>
+    
+    <textarea class="test-area" placeholder="Focus here and test LyX hotkeys..."></textarea>
+    
+    <div id="content-editable-test" contenteditable="true" class="test-area" style="min-height: 100px;">
+        Click here to test contenteditable hotkeys...
+    </div>
+    
+    <h2>🔧 Debug Information</h2>
+    <div id="debug-info" style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; white-space: pre-wrap;"></div>
+    
+    <script>
+        function updateStatus() {
+            const status = document.getElementById('status');
+            const debug = document.getElementById('debug-info');
+            const urlElement = document.getElementById('current-url');
+            
+            // Show current URL
+            urlElement.textContent = window.location.href;
+            
+            // Check for extension
+            if (document.getElementById('lyx-extension-indicator')) {
+                status.className = 'status success';
+                status.innerHTML = '✅ Extension content script detected!';
+            } else if (typeof window.lyxHotkeyExtension !== 'undefined') {
+                status.className = 'status success';
+                status.innerHTML = '✅ Extension main class detected!';
+            } else {
+                status.className = 'status error';
+                status.innerHTML = '❌ Extension not detected';
+            }
+            
+            // Debug info
+            let debugText = `Page Load Time: ${new Date().toLocaleString()}\n`;
+            debugText += `URL: ${window.location.href}\n`;
+            debugText += `User Agent: ${navigator.userAgent}\n`;
+            debugText += `Document Ready State: ${document.readyState}\n\n`;
+            
+            debugText += `Extension Detection:\n`;
+            debugText += `- Visual Indicator: ${document.getElementById('lyx-extension-indicator') ? 'Found' : 'Not Found'}\n`;
+            debugText += `- Main Extension Class: ${typeof window.lyxHotkeyExtension}\n`;
+            debugText += `- EventManager: ${typeof window.EventManager}\n`;
+            debugText += `- Chrome Runtime: ${typeof chrome}\n\n`;
+            
+            debugText += `Console Messages: Check browser console for detailed logs\n`;
+            
+            debug.textContent = debugText;
+        }
+        
+        // Update status every 2 seconds
+        setInterval(updateStatus, 2000);
+        
+        // Initial update
+        setTimeout(updateStatus, 1000);
+        
+        // Log page events
+        console.log('🔍 TEST PAGE: Page loaded');
+        console.log('🔍 TEST PAGE: URL:', window.location.href);
+        console.log('🔍 TEST PAGE: Looking for extension...');
+        
+        // Test keyboard events
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.altKey) {
+                console.log('🔍 TEST PAGE: Key combination pressed:', {
+                    key: e.key,
+                    code: e.code,
+                    ctrlKey: e.ctrlKey,
+                    altKey: e.altKey,
+                    shiftKey: e.shiftKey,
+                    target: e.target.tagName
+                });
+            }
+        });
+    </script>
+</body>
+</html>

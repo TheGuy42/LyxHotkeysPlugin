@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LyX Hotkey Extension",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "Replicate LyX hotkey behavior in web browsers",
   
   "permissions": [
@@ -21,18 +21,10 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": [
-        "lyx-parser.js",
-        "core/event-manager.js",
-        "core/config-manager.js",
-        "core/element-detector.js", 
-        "core/key-sequence-handler.js",
-        "core/action-executor.js",
-        "content.js"
-      ],
-      "run_at": "document_end",
-      "all_frames": false,
-      "match_about_blank": false
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_about_blank": true
     }
   ],
   
@@ -58,16 +50,7 @@
   
   "web_accessible_resources": [
     {
-      "resources": [
-        "injected.js", 
-        "test.html", 
-        "test-page.js",
-        "debug.html", 
-        "test.js", 
-        "debug.js",
-        "core/*.js",
-        "mac.bind"
-      ],
+      "resources": ["injected.js", "test.html", "debug.html", "test.js", "debug.js"],
       "matches": ["<all_urls>"]
     }
   ]

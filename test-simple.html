@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple LyX Extension Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-area { 
+            width: 100%; 
+            height: 200px; 
+            border: 2px solid #ccc; 
+            padding: 10px; 
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        .status { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>LyX Extension Test</h1>
+    
+    <div id="status" class="status warning">Loading...</div>
+    
+    <h2>Test Area</h2>
+    <p>Focus on the textarea below and try these hotkeys:</p>
+    <ul>
+        <li><strong>Ctrl+M</strong> → Should insert $$</li>
+        <li><strong>Ctrl+B</strong> → Should insert ****</li>
+        <li><strong>Alt+G</strong> → Should insert \alpha</li>
+    </ul>
+    
+    <textarea class="test-area" placeholder="Focus here and test LyX hotkeys..."></textarea>
+    
+    <h2>Debug Info</h2>
+    <div id="debug-info" style="background: #f5f5f5; padding: 10px; font-family: monospace; font-size: 12px;"></div>
+    
+    <script>
+        function checkExtension() {
+            const status = document.getElementById('status');
+            const debug = document.getElementById('debug-info');
+            
+            if (typeof window.lyxHotkeyExtension === 'undefined') {
+                status.className = 'status error';
+                status.textContent = 'Extension not loaded';
+                debug.textContent = 'window.lyxHotkeyExtension is undefined';
+                return;
+            }
+            
+            try {
+                const extensionStatus = window.lyxHotkeyExtension.getStatus();
+                
+                if (extensionStatus.initialized) {
+                    status.className = 'status success';
+                    status.textContent = 'Extension loaded and initialized!';
+                } else {
+                    status.className = 'status warning';
+                    status.textContent = 'Extension loaded but not initialized';
+                }
+                
+                debug.innerHTML = `
+                    Extension Status:<br>
+                    - Initialized: ${extensionStatus.initialized}<br>
+                    - Enabled: ${extensionStatus.enabled}<br>
+                    - Has Active Element: ${extensionStatus.hasActiveElement}<br>
+                    - Last Active Element: ${extensionStatus.lastActiveElement}<br>
+                    - Key Sequence: ${JSON.stringify(extensionStatus.keySequence)}<br>
+                    - Mappings Count: ${extensionStatus.mappingsCount}
+                `;
+                
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = 'Extension error: ' + error.message;
+                debug.textContent = error.stack;
+            }
+        }
+        
+        // Check status every second
+        setInterval(checkExtension, 1000);
+        
+        // Initial check
+        setTimeout(checkExtension, 100);
+        
+        // Add event listener to textarea for testing
+        document.querySelector('.test-area').addEventListener('input', function(e) {
+            console.log('Textarea content changed:', e.target.value);
+        });
+        
+        document.querySelector('.test-area').addEventListener('keydown', function(e) {
+            console.log('Key pressed:', e.key, 'Ctrl:', e.ctrlKey, 'Alt:', e.altKey);
+        });
+    </script>
+</body>
+</html>

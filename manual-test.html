@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LyX Hotkey Manual Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+            border: 2px solid #ccc;
+        }
+        textarea:focus {
+            border-color: #007acc;
+        }
+        .instructions {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>LyX Hotkey Extension - Manual Test</h1>
+    
+    <div class="instructions">
+        <h3>Test Instructions:</h3>
+        <ol>
+            <li>Make sure the LyX extension is loaded and enabled</li>
+            <li>Click in the text area below</li>
+            <li>Try these hotkeys:
+                <ul>
+                    <li><strong>Ctrl+M</strong> → Should insert: <code>$$  $$</code></li>
+                    <li><strong>Ctrl+B</strong> → Should insert: <code>\textbf{}</code></li>
+                    <li><strong>Ctrl+I</strong> → Should insert: <code>\emph{}</code></li>
+                </ul>
+            </li>
+            <li>Check the browser console (F12) for debug messages</li>
+        </ol>
+    </div>
+
+    <h3>Test Area:</h3>
+    <textarea id="testArea" placeholder="Click here and test hotkeys..."></textarea>
+
+    <h3>Console Debug Info:</h3>
+    <div id="debugInfo">
+        <button onclick="checkExtension()">Check Extension Status</button>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function checkExtension() {
+            const statusDiv = document.getElementById('status');
+            
+            if (window.lyxHotkeyExtension) {
+                const status = window.lyxHotkeyExtension.getStatus();
+                statusDiv.innerHTML = `
+                    <div class="test-result success">
+                        <strong>Extension Status:</strong><br>
+                        ✅ Extension found: Yes<br>
+                        ✅ Initialized: ${status.initialized}<br>
+                        ✅ Enabled: ${status.enabled}<br>
+                        ✅ Mappings count: ${status.mappingsCount}<br>
+                        ✅ Has active element: ${status.hasActiveElement}<br>
+                        ✅ Active element type: ${status.lastActiveElement || 'None'}
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="test-result error">
+                        ❌ Extension not found - make sure it's loaded and enabled
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-check on load
+        setTimeout(checkExtension, 2000);
+
+        // Also check when user interacts
+        document.getElementById('testArea').addEventListener('focus', () => {
+            console.log('🎯 Textarea focused');
+            setTimeout(checkExtension, 100);
+        });
+
+        document.getElementById('testArea').addEventListener('blur', () => {
+            console.log('🎯 Textarea blurred');
+        });
+    </script>
+</body>
+</html>

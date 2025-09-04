@@ -2,110 +2,113 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>LyX Hotkey Extension - Options</title>
+  <title>LyX Hotkey Extension - Configuration</title>
+  <link rel="stylesheet" href="options.html" style="display: none;">
   <style>
+    /* Import existing styles from original options.html */
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      max-width: 800px;
+      line-height: 1.6;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 40px 20px;
+      padding: 20px;
       background-color: #f8f9fa;
-      line-height: 1.5;
-    }
-
-    .container {
-      background: white;
-      border-radius: 12px;
-      padding: 40px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
 
     .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
       text-align: center;
-      margin-bottom: 40px;
     }
 
     .header h1 {
-      color: #1a202c;
-      margin-bottom: 8px;
-      font-size: 28px;
+      margin: 0 0 0.5rem 0;
+      font-size: 2.5rem;
       font-weight: 700;
     }
 
-    .header p {
-      color: #718096;
-      font-size: 16px;
+    .header .subtitle {
+      font-size: 1.1rem;
+      opacity: 0.9;
       margin: 0;
     }
 
-    .section {
-      margin-bottom: 40px;
+    .version-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.5rem;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
     }
 
-    .section h2 {
-      color: #2d3748;
-      font-size: 20px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #e2e8f0;
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
     }
 
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      color: #333;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Upload Area */
     .upload-area {
       border: 2px dashed #cbd5e0;
       border-radius: 8px;
-      padding: 40px 20px;
+      padding: 2rem;
       text-align: center;
-      background-color: #f7fafc;
-      transition: all 0.3s ease;
       cursor: pointer;
-      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      margin-bottom: 1rem;
     }
 
-    .upload-area:hover {
+    .upload-area:hover, .upload-area.dragover {
       border-color: #667eea;
-      background-color: #edf2f7;
-    }
-
-    .upload-area.dragover {
-      border-color: #667eea;
-      background-color: #e6fffa;
+      background-color: #f7fafc;
     }
 
     .upload-icon {
-      font-size: 48px;
+      font-size: 3rem;
       color: #a0aec0;
-      margin-bottom: 16px;
+      margin-bottom: 1rem;
     }
 
-    .upload-text {
-      color: #4a5568;
-      font-size: 16px;
-      margin-bottom: 12px;
-    }
-
-    .upload-hint {
-      color: #718096;
-      font-size: 14px;
-    }
-
-    .file-input {
-      display: none;
-    }
-
+    /* Buttons */
     .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.2s;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .btn-primary {
       background-color: #667eea;
       color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 0.2s;
     }
 
-    .btn:hover {
+    .btn-primary:hover {
       background-color: #5a67d8;
     }
 
@@ -118,6 +121,15 @@
       background-color: #cbd5e0;
     }
 
+    .btn-success {
+      background-color: #48bb78;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background-color: #38a169;
+    }
+
     .btn-danger {
       background-color: #f56565;
       color: white;
@@ -127,70 +139,63 @@
       background-color: #e53e3e;
     }
 
-    .textarea {
+    /* Textarea */
+    .config-textarea {
       width: 100%;
-      min-height: 200px;
-      padding: 16px;
+      height: 300px;
+      padding: 1rem;
       border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
-      font-size: 13px;
-      line-height: 1.4;
-      resize: vertical;
-      box-sizing: border-box;
-    }
-
-    .textarea:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .button-group {
-      display: flex;
-      gap: 12px;
-      margin-top: 20px;
-    }
-
-    .status-message {
-      padding: 12px 16px;
       border-radius: 6px;
-      margin-bottom: 20px;
-      font-size: 14px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      resize: vertical;
+    }
+
+    /* Status Messages */
+    .status-message {
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin: 1rem 0;
+      font-weight: 500;
     }
 
     .status-success {
       background-color: #c6f6d5;
-      color: #22543d;
+      color: #2f855a;
       border: 1px solid #9ae6b4;
     }
 
     .status-error {
       background-color: #fed7d7;
-      color: #742a2a;
+      color: #c53030;
       border: 1px solid #feb2b2;
     }
 
     .status-info {
       background-color: #bee3f8;
-      color: #2a4365;
+      color: #2c5282;
       border: 1px solid #90cdf4;
     }
 
+    .hidden {
+      display: none;
+    }
+
+    /* Hotkey List */
     .hotkey-list {
-      background: #f7fafc;
-      border-radius: 8px;
-      padding: 20px;
-      max-height: 300px;
+      max-height: 400px;
       overflow-y: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
     }
 
     .hotkey-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f7fafc;
     }
 
     .hotkey-item:last-child {
@@ -198,155 +203,184 @@
     }
 
     .hotkey-item.sequence {
-      background: #f0f9ff;
-      padding: 12px;
-      border-radius: 6px;
-      border: 1px solid #bfdbfe;
-      margin: 4px 0;
+      background-color: #faf5ff;
     }
 
     .hotkey-key {
-      font-family: 'SF Mono', Monaco, monospace;
-      background: #e2e8f0;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-
-    .hotkey-item.sequence .hotkey-key {
-      background: #dbeafe;
-      color: #1e40af;
-      font-weight: 600;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-weight: bold;
+      color: #667eea;
+      font-size: 0.875rem;
     }
 
     .hotkey-action {
       color: #4a5568;
-      font-size: 13px;
+      font-size: 0.875rem;
+    }
+
+    /* Settings */
+    .settings-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .settings-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .setting-group {
+      margin-bottom: 1rem;
+    }
+
+    .setting-label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .slider {
       flex: 1;
-      margin-left: 12px;
     }
 
-    .sample-config {
-      background: #f7fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 20px;
-      margin-top: 20px;
+    .slider-value {
+      font-weight: 500;
+      color: #667eea;
+      min-width: 60px;
     }
 
-    .sample-config h3 {
-      margin-top: 0;
-      color: #2d3748;
-      font-size: 16px;
-    }
-
-    .sample-config pre {
-      background: #1a202c;
-      color: #e2e8f0;
-      padding: 16px;
+    /* Mac Note */
+    .mac-note {
+      background-color: #fef5e7;
+      border: 1px solid #f6e05e;
       border-radius: 6px;
-      overflow-x: auto;
-      font-size: 12px;
-      line-height: 1.4;
-      margin: 0;
+      padding: 1rem;
+      margin-bottom: 1rem;
     }
 
-    .hidden {
-      display: none;
+    .mac-note h4 {
+      margin: 0 0 0.5rem 0;
+      color: #744210;
+    }
+
+    .mac-note p {
+      margin: 0;
+      color: #744210;
+      font-size: 0.875rem;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>LyX Hotkey Extension</h1>
-      <p>Configure your LyX hotkey mappings for use in web browsers</p>
-    </div>
+  <div class="header">
+    <h1>LyX Hotkey Extension</h1>
+    <p class="subtitle">Configure your LyX-style keyboard shortcuts for web browsing</p>
+    <div class="version-badge">v2.0</div>
+  </div>
 
-    <div id="statusMessage" class="status-message hidden"></div>
-
-    <div class="section">
-      <h2>Configuration File</h2>
-      
-      <div id="macKeyNote" class="status-message status-info" style="margin-bottom: 16px;">
-        <strong>📝 Mac Users:</strong> LyX M- keys are mapped to Ctrl (⌃) instead of Cmd (⌘) to avoid conflicts with system shortcuts. 
-        So <code>\bind "M-m" "math-mode"</code> becomes <strong>⌃ M</strong> instead of ⌘ M.
-        
-        <div style="margin-top: 12px;">
-          <label style="display: block; margin-bottom: 8px;">
-            <input type="radio" name="macMMapping" value="ctrl" checked style="margin-right: 8px;">
-            <strong>Recommended:</strong> Map M- to Ctrl (⌃) - avoids system conflicts
-          </label>
-          <label style="display: block; margin-bottom: 12px;">
-            <input type="radio" name="macMMapping" value="meta" style="margin-right: 8px;">
-            Map M- to Command (⌘) - may conflict with system shortcuts
-          </label>
-          
-          <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
-            <label style="display: block; margin-bottom: 8px; font-weight: 500;">
-              Key Sequence Timeout:
-            </label>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <input type="range" id="sequenceTimeout" min="500" max="3000" step="100" value="1000" style="flex: 1;">
-              <span id="timeoutValue" style="min-width: 60px; font-size: 14px;">1000ms</span>
-            </div>
-            <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
-              How long to wait for the next key in multi-key sequences (e.g., Ctrl+Shift → F)
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="main-content">
+    <!-- Configuration Panel -->
+    <div class="card">
+      <h2>📝 Configuration</h2>
       
       <div class="upload-area" id="uploadArea">
         <div class="upload-icon">📁</div>
-        <div class="upload-text">Drop your LyX .bind file here or click to browse</div>
-        <div class="upload-hint">Supports .bind files from LyX configuration</div>
+        <p><strong>Drop your .bind file here</strong></p>
+        <p>or click to browse for LyX configuration files</p>
       </div>
       
-      <input type="file" id="fileInput" class="file-input" accept=".bind,.txt">
+      <input type="file" id="fileInput" accept=".bind,.txt" style="display: none;">
       
-      <div class="button-group">
-        <button class="btn" id="browseButton">Browse Files</button>
-        <button class="btn btn-secondary" id="loadSampleButton">Load Sample Config</button>
-        <button class="btn btn-secondary" id="exportButton">Export Current Config</button>
+      <div style="margin-bottom: 1rem;">
+        <button class="btn btn-secondary" id="browseButton">📂 Browse Files</button>
+        <button class="btn btn-secondary" id="loadSampleButton">📄 Load Sample</button>
+        <button class="btn btn-secondary" id="exportButton">💾 Export Config</button>
       </div>
-    </div>
-
-    <div class="section">
-      <h2>Edit Configuration</h2>
-      <textarea id="configTextarea" class="textarea" placeholder="Paste your LyX .bind file content here..."></textarea>
       
-      <div class="button-group">
-        <button class="btn" id="saveButton">Save Configuration</button>
-        <button class="btn btn-secondary" id="resetButton">Reset to Defaults</button>
-        <button class="btn btn-danger" id="clearButton">Clear All</button>
+      <textarea id="configTextarea" class="config-textarea" placeholder="Paste your LyX .bind file content here or load a file above..."></textarea>
+      
+      <div style="margin-top: 1rem;">
+        <button class="btn btn-success" id="saveButton">✅ Save Configuration</button>
+        <button class="btn btn-secondary" id="resetButton">🔄 Reset to Defaults</button>
+        <button class="btn btn-danger" id="clearButton">🗑️ Clear All</button>
       </div>
+      
+      <div id="statusMessage" class="status-message hidden"></div>
     </div>
 
-    <div class="section">
-      <h2>Current Hotkeys</h2>
-      <div id="hotkeyList" class="hotkey-list">
-        <p style="text-align: center; color: #718096; margin: 20px 0;">No hotkeys configured</p>
+    <!-- Settings Panel -->
+    <div class="card">
+      <h2>⚙️ Settings</h2>
+      
+      <div class="settings-section">
+        <div class="setting-group">
+          <label class="setting-label">Key Sequence Timeout</label>
+          <div class="slider-container">
+            <input type="range" id="sequenceTimeout" class="slider" min="500" max="3000" step="100" value="1000">
+            <span id="timeoutValue" class="slider-value">1000ms</span>
+          </div>
+          <small style="color: #666;">Time to wait for next key in a sequence</small>
+        </div>
       </div>
-    </div>
 
-    <div class="sample-config">
-      <h3>Sample LyX Configuration</h3>
-      <p style="color: #718096; font-size: 14px; margin-bottom: 16px;">
-        Here's an example of what a LyX .bind file looks like:
-      </p>
-      <pre id="sampleConfig"># LyX bind file sample
-\\bind "C-b" "font-bold"
-\\bind "C-e" "font-emph"
-\\bind "C-u" "font-underline"
-\\bind "C-m" "math-mode"
-\\bind "C-S-M" "math-display"
-\\bind "C-l" "ert-insert"
-\\bind "A-g" "command-sequence math-mode; self-insert \\alpha;"</pre>
+      <div class="settings-section" id="macKeyNote">
+        <div class="mac-note">
+          <h4>🍎 Mac Key Mapping</h4>
+          <p>Choose how M- (Meta) keys from LyX should be mapped on Mac:</p>
+        </div>
+        
+        <div class="setting-group">
+          <label class="setting-label">M- Key Mapping</label>
+          <div class="radio-group">
+            <div class="radio-option">
+              <input type="radio" id="macCtrl" name="macMMapping" value="ctrl" checked>
+              <label for="macCtrl">Map to Ctrl (Recommended)</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="macMeta" name="macMMapping" value="meta">
+              <label for="macMeta">Map to Command (⌘)</label>
+            </div>
+          </div>
+          <small style="color: #666;">Ctrl mapping avoids conflicts with system shortcuts</small>
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- Hotkey List -->
+  <div class="card">
+    <h2>🎹 Current Hotkeys</h2>
+    <div id="hotkeyList" class="hotkey-list">
+      <p style="text-align: center; color: #718096; margin: 20px 0;">Loading hotkeys...</p>
+    </div>
+  </div>
+
+  <script src="core/event-manager.js"></script>
   <script src="lyx-parser.js"></script>
   <script src="options.js"></script>
 </body>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Module Loading Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .loading { background: #fff3cd; border: 1px solid #ffeaa7; }
+    </style>
+</head>
+<body>
+    <h1>Module Loading Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        function addResult(message, type = 'loading') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        function testModule(name, script) {
+            return new Promise((resolve) => {
+                addResult(`Loading ${name}...`, 'loading');
+                
+                const scriptElement = document.createElement('script');
+                scriptElement.src = script;
+                
+                scriptElement.onload = () => {
+                    addResult(`✅ ${name} loaded successfully`, 'success');
+                    resolve(true);
+                };
+                
+                scriptElement.onerror = (error) => {
+                    addResult(`❌ ${name} failed to load: ${error}`, 'error');
+                    resolve(false);
+                };
+                
+                document.head.appendChild(scriptElement);
+            });
+        }
+        
+        async function runTests() {
+            const modules = [
+                ['LyX Parser', 'lyx-parser.js'],
+                ['Event Manager', 'core/event-manager.js'],
+                ['Config Manager', 'core/config-manager.js'],
+                ['Element Detector', 'core/element-detector.js'],
+                ['Key Sequence Handler', 'core/key-sequence-handler.js'],
+                ['Action Executor', 'core/action-executor.js']
+            ];
+            
+            for (const [name, script] of modules) {
+                const success = await testModule(name, script);
+                if (!success) {
+                    addResult(`❌ Stopping tests due to ${name} failure`, 'error');
+                    return;
+                }
+                
+                // Check if the class is available
+                const className = name.replace(/\s/g, '');
+                if (typeof window[className] !== 'undefined') {
+                    addResult(`✅ ${className} class is available`, 'success');
+                } else {
+                    addResult(`❌ ${className} class is NOT available`, 'error');
+                }
+                
+                // Small delay between loads
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // Try to instantiate all classes
+            addResult('Testing instantiation...', 'loading');
+            try {
+                const eventManager = new EventManager();
+                addResult('✅ EventManager instantiated', 'success');
+                
+                const configManager = new ConfigurationManager(eventManager);
+                addResult('✅ ConfigurationManager instantiated', 'success');
+                
+                const elementDetector = new ElementDetector(eventManager);
+                addResult('✅ ElementDetector instantiated', 'success');
+                
+                const keySequenceHandler = new KeySequenceHandler(eventManager);
+                addResult('✅ KeySequenceHandler instantiated', 'success');
+                
+                const actionExecutor = new ActionExecutor(eventManager);
+                addResult('✅ ActionExecutor instantiated', 'success');
+                
+                addResult('🎉 All modules working correctly!', 'success');
+                
+            } catch (error) {
+                addResult(`❌ Instantiation error: ${error.message}`, 'error');
+                console.error('Instantiation error:', error);
+            }
+        }
+        
+        runTests();
+    </script>
+</body>
+</html>

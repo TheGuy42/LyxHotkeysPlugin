@@ -1,226 +1,227 @@
 /**
- * Background Script for LyX Hotkey Extension
- * Handles extension state and communication between components
+ * Refactored Background Script for LyX Hotkey Extension
+ * Uses modular architecture for better maintainability
  */
 
-// Extension state
-let extensionEnabled = true;
-let hotkeyMappings = new Map();
-
-// Initialize extension
-chrome.runtime.onInstalled.addListener(async () => {
-  // Load default LyX-style shortcuts
-  const defaultMappings = await loadDefaultMappings();
-  
-  // Set default state
-  await chrome.storage.local.set({ 
-    enabled: true,
-    hotkeyMappings: defaultMappings,
-    config: ''
-  });
-  
-  hotkeyMappings = new Map(Object.entries(defaultMappings));
-});
-
-// Handle extension startup
-chrome.runtime.onStartup.addListener(async () => {
-  const result = await chrome.storage.local.get(['enabled', 'hotkeyMappings']);
-  extensionEnabled = result.enabled ?? true;
-  
-  if (result.hotkeyMappings && Object.keys(result.hotkeyMappings).length > 0) {
-    hotkeyMappings = new Map(Object.entries(result.hotkeyMappings));
-  } else {
-    // If no mappings, load defaults
-    const defaultMappings = await loadDefaultMappings();
-    hotkeyMappings = new Map(Object.entries(defaultMappings));
-    await chrome.storage.local.set({ hotkeyMappings: defaultMappings });
+class LyXBackgroundExtension {
+  constructor() {
+    console.log('🏗️ LyX Background: Initializing...');
+    
+    // Initialize core modules
+    this.eventManager = new EventManager();
+    this.configManager = new ConfigurationManager(this.eventManager);
+    
+    // State
+    this.isInitialized = false;
+    
+    this.initialize();
   }
-});
 
-// Listen for messages from content scripts and popup
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  try {
-    switch (request.action) {
-      case 'getState':
-        sendResponse({
-          enabled: extensionEnabled,
-          mappings: Object.fromEntries(hotkeyMappings)
-        });
-        break;
-        
-      case 'toggleExtension':
-        extensionEnabled = !extensionEnabled;
-        chrome.storage.local.set({ enabled: extensionEnabled });
-        
-        // Notify all tabs
-        chrome.tabs.query({}, (tabs) => {
-          tabs.forEach(tab => {
-            chrome.tabs.sendMessage(tab.id, {
-              action: 'extensionToggled',
-              enabled: extensionEnabled
-            }).catch(() => {}); // Ignore errors for tabs that can't receive messages
-          });
-        });
-        
-        sendResponse({ enabled: extensionEnabled });
-        break;
-        
-      case 'updateMappings':
-        if (request.mappings && typeof request.mappings === 'object') {
-          hotkeyMappings = new Map(Object.entries(request.mappings));
-          chrome.storage.local.set({ 
-            hotkeyMappings: request.mappings 
-          });
-          
-          // Notify all tabs
-          chrome.tabs.query({}, (tabs) => {
-            tabs.forEach(tab => {
-              chrome.tabs.sendMessage(tab.id, {
-                action: 'mappingsUpdated',
-                mappings: request.mappings
-              }).catch(() => {});
-            });
-          });
-          
-          sendResponse({ success: true });
-        } else {
-          console.error('Invalid mappings provided:', request.mappings);
-          sendResponse({ success: false, error: 'Invalid mappings' });
-        }
-        break;
-        
-      case 'loadConfig':
-        loadConfigFromText(request.configText);
-        sendResponse({ success: true });
-        break;
-        
-      case 'updateSequenceTimeout':
-        // Notify all tabs about sequence timeout change
-        chrome.tabs.query({}, (tabs) => {
-          tabs.forEach(tab => {
-            chrome.tabs.sendMessage(tab.id, {
-              action: 'sequenceTimeoutUpdated',
-              timeout: request.timeout
-            }).catch(() => {});
-          });
-        });
-        sendResponse({ success: true });
-        break;
-        
-      default:
-        console.warn('Unknown action:', request.action);
-        sendResponse({ success: false, error: 'Unknown action' });
+  /**
+   * Initialize the background extension
+   */
+  async initialize() {
+    if (this.isInitialized) return;
+    
+    try {
+      // Initialize configuration manager
+      await this.configManager.initialize();
+      
+      // Setup event listeners
+      this.setupEventListeners();
+      
+      // Setup Chrome extension event handlers
+      this.setupExtensionEventHandlers();
+      
+      this.isInitialized = true;
+      console.log('✅ LyX Background: Initialization completed successfully');
+      
+    } catch (error) {
+      console.error('❌ LyX Background: Initialization failed:', error);
     }
-  } catch (error) {
-    console.error('Error handling message:', error, request);
-    sendResponse({ success: false, error: error.message });
   }
-  
-  return true; // Keep message channel open for async response
-});
 
-// Handle tab updates to inject content script
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete' && tab.url && 
-      (tab.url.startsWith('http') || tab.url.startsWith('https'))) {
-    
-    // Send current state to the tab
-    chrome.tabs.sendMessage(tabId, {
-      action: 'extensionToggled',
-      enabled: extensionEnabled
-    }).catch(() => {}); // Ignore errors
-    
-    chrome.tabs.sendMessage(tabId, {
-      action: 'mappingsUpdated',
-      mappings: Object.fromEntries(hotkeyMappings)
-    }).catch(() => {});
-  }
-});
-
-/**
- * Load default LyX-style key mappings
- */
-async function loadDefaultMappings() {
-  const defaultMappings = {
-    // Math mode
-    'ctrl+m': { type: 'wrap', before: '$', after: '$' },
-    'ctrl+shift+m': { type: 'wrap', before: '$$\n', after: '\n$$' },
-    
-    // Text formatting
-    'ctrl+b': { type: 'wrap', before: '**', after: '**' },
-    'ctrl+e': { type: 'wrap', before: '*', after: '*' },
-    'ctrl+u': { type: 'wrap', before: '_', after: '_' },
-    'ctrl+shift+p': { type: 'wrap', before: '`', after: '`' },
-    
-    // LaTeX commands (multi-key sequences)
-    'ctrl+l': { type: 'wrap', before: '\\', after: '' },
-    'ctrl+shift f': { type: 'insert', text: '\\frac{}{}' },
-    'ctrl+shift r': { type: 'insert', text: '\\sqrt{}' },
-    'ctrl+shift i': { type: 'insert', text: '\\int_{}^{}' },
-    
-    // Greek letters (single keys)
-    'alt+g': { type: 'insert', text: '\\alpha' },
-    'alt+b': { type: 'insert', text: '\\beta' },
-    'alt+d': { type: 'insert', text: '\\delta' },
-    'alt+l': { type: 'insert', text: '\\lambda' },
-    'alt+m': { type: 'insert', text: '\\mu' },
-    'alt+p': { type: 'insert', text: '\\pi' },
-    'alt+s': { type: 'insert', text: '\\sigma' },
-    'alt+t': { type: 'insert', text: '\\theta' },
-    
-    // Greek letters (multi-key sequences with ctrl+l)
-    'ctrl+l a': { type: 'insert', text: '\\alpha' },
-    'ctrl+l b': { type: 'insert', text: '\\beta' },
-    'ctrl+l g': { type: 'insert', text: '\\gamma' },
-    'ctrl+l d': { type: 'insert', text: '\\delta' },
-    'ctrl+l e': { type: 'insert', text: '\\epsilon' },
-    'ctrl+l l': { type: 'insert', text: '\\lambda' },
-    'ctrl+l m': { type: 'insert', text: '\\mu' },
-    'ctrl+l p': { type: 'insert', text: '\\pi' },
-    'ctrl+l s': { type: 'insert', text: '\\sigma' },
-    'ctrl+l t': { type: 'insert', text: '\\theta' },
-    
-    // Special characters
-    'alt+space': { type: 'insert', text: '\u00A0' }, // Non-breaking space
-    'ctrl+period': { type: 'insert', text: '. ' },
-    'meta+period': { type: 'insert', text: '…' }
-  };
-  
-  return defaultMappings;
-}
-
-/**
- * Load configuration from LyX .bind file text
- */
-async function loadConfigFromText(configText) {
-  try {
-    // Import the parser (we'll need to inject it into the background context)
-    const parser = new LyXConfigParser();
-    const mappings = parser.parse(configText);
-    
-    // Convert Map to object for storage
-    const mappingsObj = Object.fromEntries(mappings);
-    
-    hotkeyMappings = mappings;
-    await chrome.storage.local.set({ 
-      hotkeyMappings: mappingsObj,
-      config: configText
-    });
-    
-    // Notify all tabs
-    chrome.tabs.query({}, (tabs) => {
-      tabs.forEach(tab => {
-        chrome.tabs.sendMessage(tab.id, {
-          action: 'mappingsUpdated',
-          mappings: mappingsObj
-        }).catch(() => {});
+  /**
+   * Setup internal event listeners
+   */
+  setupEventListeners() {
+    // Listen for configuration events
+    this.eventManager.on('mappingsUpdated', (mappings) => {
+      this.notifyAllTabs('mappingsUpdated', {
+        mappings: Object.fromEntries(mappings)
       });
     });
+
+    this.eventManager.on('enabledToggled', (enabled) => {
+      this.notifyAllTabs('extensionToggled', { enabled });
+    });
+
+    this.eventManager.on('sequenceTimeoutUpdated', (timeout) => {
+      this.notifyAllTabs('sequenceTimeoutUpdated', { timeout });
+    });
+
+    this.eventManager.on('settingsUpdated', (settings) => {
+      // Notify tabs of relevant setting changes
+      this.notifyAllTabs('settingsUpdated', { settings });
+    });
+  }
+
+  /**
+   * Setup Chrome extension event handlers
+   */
+  setupExtensionEventHandlers() {
+    // Handle extension installation
+    chrome.runtime.onInstalled.addListener(() => {
+      this.handleInstall();
+    });
+
+    // Handle extension startup
+    chrome.runtime.onStartup.addListener(() => {
+      this.handleStartup();
+    });
+
+    // Handle messages
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      return this.eventManager.handleMessage(request, sender, sendResponse);
+    });
+
+    // Handle tab updates
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+      this.handleTabUpdate(tabId, changeInfo, tab);
+    });
+
+    // Register additional message handlers
+    this.registerMessageHandlers();
+  }
+
+  /**
+   * Register message handlers
+   */
+  registerMessageHandlers() {
+    // Toggle extension
+    this.eventManager.onMessage('toggleExtension', async () => {
+      return await this.configManager.toggleEnabled();
+    });
+
+    // Get current state
+    this.eventManager.onMessage('getState', () => {
+      return this.configManager.getState();
+    });
+
+    // Get initial state for content scripts
+    this.eventManager.onMessage('getInitialState', () => {
+      return this.configManager.getState();
+    });
+  }
+
+  /**
+   * Handle extension installation
+   */
+  async handleInstall() {
+    console.log('🔧 LyX Background: Extension installed, loading defaults...');
     
-  } catch (error) {
-    console.error('Failed to parse LyX config:', error);
+    try {
+      // Configuration manager will handle loading defaults
+      await this.configManager.loadDefaultMappings();
+      console.log('✅ LyX Background: Default configuration loaded');
+    } catch (error) {
+      console.error('❌ LyX Background: Error loading defaults:', error);
+    }
+  }
+
+  /**
+   * Handle extension startup
+   */
+  async handleStartup() {
+    console.log('🔧 LyX Background: Extension starting up...');
+    
+    try {
+      // Re-initialize configuration manager
+      await this.configManager.initialize();
+      console.log('✅ LyX Background: Startup completed');
+    } catch (error) {
+      console.error('❌ LyX Background: Error during startup:', error);
+    }
+  }
+
+  /**
+   * Handle tab updates
+   */
+  handleTabUpdate(tabId, changeInfo, tab) {
+    if (changeInfo.status === 'complete' && tab.url && 
+        (tab.url.startsWith('http') || tab.url.startsWith('https'))) {
+      
+      // Send current state to the tab
+      const state = this.configManager.getState();
+      
+      chrome.tabs.sendMessage(tabId, {
+        action: 'extensionToggled',
+        enabled: state.enabled
+      }).catch(() => {}); // Ignore errors
+      
+      chrome.tabs.sendMessage(tabId, {
+        action: 'mappingsUpdated',
+        mappings: state.mappings
+      }).catch(() => {});
+
+      if (state.settings.sequenceTimeout) {
+        chrome.tabs.sendMessage(tabId, {
+          action: 'sequenceTimeoutUpdated',
+          timeout: state.settings.sequenceTimeout
+        }).catch(() => {});
+      }
+    }
+  }
+
+  /**
+   * Notify all tabs of a change
+   * @param {string} action - Action name
+   * @param {Object} data - Data to send
+   */
+  async notifyAllTabs(action, data) {
+    try {
+      const tabs = await this.queryTabs({});
+      tabs.forEach(tab => {
+        chrome.tabs.sendMessage(tab.id, {
+          action,
+          ...data
+        }).catch(() => {}); // Ignore errors for tabs that can't receive messages
+      });
+    } catch (error) {
+      console.error('LyX Background: Error notifying tabs:', error);
+    }
+  }
+
+  /**
+   * Query tabs (promisified)
+   * @param {Object} queryInfo - Query information
+   * @returns {Promise<Array>} - Array of tabs
+   */
+  async queryTabs(queryInfo) {
+    return new Promise((resolve) => {
+      chrome.tabs.query(queryInfo, resolve);
+    });
+  }
+
+  /**
+   * Get extension status
+   * @returns {Object} - Status information
+   */
+  getStatus() {
+    return {
+      initialized: this.isInitialized,
+      enabled: this.configManager.getSettings().enabled,
+      mappingCount: this.configManager.getMappings().size
+    };
   }
 }
 
-// We need to import the parser into the background script context
-importScripts('lyx-parser.js');
+// Import required modules
+importScripts(
+  'core/event-manager.js',
+  'core/config-manager.js',
+  'lyx-parser.js'
+);
+
+// Initialize the background extension
+const lyxBackgroundExtension = new LyXBackgroundExtension();

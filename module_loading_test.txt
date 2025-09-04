@@ -1,0 +1,25 @@
+Loading LyX Parser...
+✅ LyX Parser loaded successfully
+❌ LyXParser class is NOT available
+Loading Event Manager...
+✅ Event Manager loaded successfully
+✅ EventManager class is available
+Loading Config Manager...
+✅ Config Manager loaded successfully
+❌ ConfigManager class is NOT available
+Loading Element Detector...
+✅ Element Detector loaded successfully
+✅ ElementDetector class is available
+Loading Key Sequence Handler...
+✅ Key Sequence Handler loaded successfully
+✅ KeySequenceHandler class is available
+Loading Action Executor...
+✅ Action Executor loaded successfully
+✅ ActionExecutor class is available
+Testing instantiation...
+✅ EventManager instantiated
+✅ ConfigurationManager instantiated
+✅ ElementDetector instantiated
+✅ KeySequenceHandler instantiated
+✅ ActionExecutor instantiated
+🎉 All modules working correctly!

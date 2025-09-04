@@ -1,330 +1,65 @@
-🔧 Parsing config with Mac preference: meta {mapMetaToCtrl: false}
-options.js:209 🔧 Platform detected as Mac: true
-lyx-parser.js:78 🔧 LyX Parser: Mac Command mapping mode - checking for M-/C- conflicts
-173lyx-parser.js:173 🔧 LyX Parser: Mac M- mapping to Meta (mapMetaToCtrl=false)
-options.js:213 🔍 Sample mappings generated:
-options.js:217   "meta+b" → navigation: moveLeft
-options.js:217   "meta+d" → delete: deleteRight
-options.js:217   "meta+e" → navigation: moveLineEnd
-options.js:217   "meta+f" → navigation: moveRight
-options.js:217   "meta+h" → delete: deleteLeft
-options.js:250 🎯 Mapping key: "meta+b" → action: {type: 'navigation', action: 'moveLeft'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="meta+b", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌘ B"
-options.js:253 🎨 Display key: "meta+b" → "⌘ B"
-options.js:250 🎯 Mapping key: "meta+d" → action: {type: 'delete', action: 'deleteRight'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="meta+d", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌘ D"
-options.js:253 🎨 Display key: "meta+d" → "⌘ D"
-options.js:250 🎯 Mapping key: "meta+e" → action: {type: 'navigation', action: 'moveLineEnd'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="meta+e", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌘ E"
-options.js:253 🎨 Display key: "meta+e" → "⌘ E"
-options.js:250 🎯 Mapping key: "meta+f" → action: {type: 'navigation', action: 'moveRight'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="meta+f", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌘ F"
-options.js:253 🎨 Display key: "meta+f" → "⌘ F"
-options.js:250 🎯 Mapping key: "meta+h" → action: {type: 'delete', action: 'deleteLeft'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="meta+h", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌘ H"
-options.js:253 🎨 Display key: "meta+h" → "⌘ H"
-options.js:250 🎯 Mapping key: "meta+o" → action: {type: 'insert', text: '\n\n'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="meta+o", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌘ O"
-options.js:253 🎨 Display key: "meta+o" → "⌘ O"
-options.js:250 🎯 Mapping key: "delete" → action: {type: 'delete', action: 'deleteRight'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="delete", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌦"
-options.js:253 🎨 Display key: "delete" → "⌦"
-options.js:250 🎯 Mapping key: "ctrl+b" → action: {type: 'wrap', before: '**', after: '**'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+b", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ B"
-options.js:253 🎨 Display key: "ctrl+b" → "⌃ B"
-options.js:250 🎯 Mapping key: "ctrl+c" → action: {type: 'clipboard', action: 'copy'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+c", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ C"
-options.js:253 🎨 Display key: "ctrl+c" → "⌃ C"
-options.js:250 🎯 Mapping key: "ctrl+e" → action: {type: 'wrap', before: '*', after: '*'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+e", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ E"
-options.js:253 🎨 Display key: "ctrl+e" → "⌃ E"
-options.js:250 🎯 Mapping key: "ctrl+k" → action: {type: 'delete', action: 'deleteLineForward'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+k", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ K"
-options.js:253 🎨 Display key: "ctrl+k" → "⌃ K"
-options.js:250 🎯 Mapping key: "ctrl+m" → action: {type: 'wrap', before: '$', after: '$'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+m", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ M"
-options.js:253 🎨 Display key: "ctrl+m" → "⌃ M"
-options.js:250 🎯 Mapping key: "ctrl+shift+m" → action: {type: 'wrap', before: '$$\n', after: '\n$$'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+shift+m", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ⇧ M"
-options.js:253 🎨 Display key: "ctrl+shift+m" → "⌃ ⇧ M"
-options.js:250 🎯 Mapping key: "ctrl+shift+p" → action: {type: 'wrap', before: '`', after: '`'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+shift+p", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ⇧ P"
-options.js:253 🎨 Display key: "ctrl+shift+p" → "⌃ ⇧ P"
-options.js:250 🎯 Mapping key: "ctrl+u" → action: {type: 'wrap', before: '_', after: '_'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+u", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ U"
-options.js:253 🎨 Display key: "ctrl+u" → "⌃ U"
-options.js:250 🎯 Mapping key: "ctrl+v" → action: {type: 'clipboard', action: 'paste'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+v", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ V"
-options.js:253 🎨 Display key: "ctrl+v" → "⌃ V"
-options.js:250 🎯 Mapping key: "ctrl+x" → action: {type: 'clipboard', action: 'cut'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+x", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ X"
-options.js:253 🎨 Display key: "ctrl+x" → "⌃ X"
-options.js:250 🎯 Mapping key: "ctrl+z" → action: {type: 'edit', action: 'undo'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+z", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ Z"
-options.js:253 🎨 Display key: "ctrl+z" → "⌃ Z"
-options.js:250 🎯 Mapping key: "ctrl+shift+z" → action: {type: 'edit', action: 'redo'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+shift+z", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ⇧ Z"
-options.js:253 🎨 Display key: "ctrl+shift+z" → "⌃ ⇧ Z"
-options.js:250 🎯 Mapping key: "ctrl+arrowright" → action: {type: 'navigation', action: 'moveLineEnd'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+arrowright", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ →"
-options.js:253 🎨 Display key: "ctrl+arrowright" → "⌃ →"
-options.js:250 🎯 Mapping key: "ctrl+arrowleft" → action: {type: 'navigation', action: 'moveLineStart'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+arrowleft", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ←"
-options.js:253 🎨 Display key: "ctrl+arrowleft" → "⌃ ←"
-options.js:250 🎯 Mapping key: "ctrl+arrowdown" → action: {type: 'navigation', action: 'moveDocumentEnd'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+arrowdown", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ↓"
-options.js:253 🎨 Display key: "ctrl+arrowdown" → "⌃ ↓"
-options.js:250 🎯 Mapping key: "ctrl+arrowup" → action: {type: 'navigation', action: 'moveDocumentStart'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+arrowup", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ↑"
-options.js:253 🎨 Display key: "ctrl+arrowup" → "⌃ ↑"
-options.js:250 🎯 Mapping key: "shift+ctrl+arrowright" → action: {type: 'selection', action: 'selectLineEnd'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+ctrl+arrowright", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ ⌃ →"
-options.js:253 🎨 Display key: "shift+ctrl+arrowright" → "⇧ ⌃ →"
-options.js:250 🎯 Mapping key: "shift+ctrl+arrowleft" → action: {type: 'selection', action: 'selectLineStart'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+ctrl+arrowleft", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ ⌃ ←"
-options.js:253 🎨 Display key: "shift+ctrl+arrowleft" → "⇧ ⌃ ←"
-options.js:250 🎯 Mapping key: "shift+arrowright" → action: {type: 'selection', action: 'selectRight'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+arrowright", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ →"
-options.js:253 🎨 Display key: "shift+arrowright" → "⇧ →"
-options.js:250 🎯 Mapping key: "shift+arrowleft" → action: {type: 'selection', action: 'selectLeft'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+arrowleft", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ ←"
-options.js:253 🎨 Display key: "shift+arrowleft" → "⇧ ←"
-options.js:250 🎯 Mapping key: "shift+ctrl+arrowup" → action: {type: 'selection', action: 'selectDocumentStart'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+ctrl+arrowup", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ ⌃ ↑"
-options.js:253 🎨 Display key: "shift+ctrl+arrowup" → "⇧ ⌃ ↑"
-options.js:250 🎯 Mapping key: "shift+ctrl+arrowdown" → action: {type: 'selection', action: 'selectDocumentEnd'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+ctrl+arrowdown", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ ⌃ ↓"
-options.js:253 🎨 Display key: "shift+ctrl+arrowdown" → "⇧ ⌃ ↓"
-options.js:250 🎯 Mapping key: "alt+arrowright" → action: {type: 'navigation', action: 'moveWordRight'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="alt+arrowright", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌥ →"
-options.js:253 🎨 Display key: "alt+arrowright" → "⌥ →"
-options.js:250 🎯 Mapping key: "shift+alt+arrowright" → action: {type: 'selection', action: 'selectWordRight'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+alt+arrowright", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ ⌥ →"
-options.js:253 🎨 Display key: "shift+alt+arrowright" → "⇧ ⌥ →"
-options.js:250 🎯 Mapping key: "alt+arrowleft" → action: {type: 'navigation', action: 'moveWordLeft'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="alt+arrowleft", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌥ ←"
-options.js:253 🎨 Display key: "alt+arrowleft" → "⌥ ←"
-options.js:250 🎯 Mapping key: "shift+alt+arrowleft" → action: {type: 'selection', action: 'selectWordLeft'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+alt+arrowleft", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ ⌥ ←"
-options.js:253 🎨 Display key: "shift+alt+arrowleft" → "⇧ ⌥ ←"
-options.js:250 🎯 Mapping key: "ctrl+shift+o" → action: {type: 'wrap', before: '~~', after: '~~'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+shift+o", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ⇧ O"
-options.js:253 🎨 Display key: "ctrl+shift+o" → "⌃ ⇧ O"
-options.js:250 🎯 Mapping key: "~shift+meta+quotedbl" → action: {type: 'insert', text: '"'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="~shift+meta+quotedbl", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "~⇧ ⌘ ""
-options.js:253 🎨 Display key: "~shift+meta+quotedbl" → "~⇧ ⌘ ""
-options.js:250 🎯 Mapping key: "~shift+ctrl+quotedbl" → action: {type: 'insert', text: "'"}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="~shift+ctrl+quotedbl", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "~⇧ ⌃ ""
-options.js:253 🎨 Display key: "~shift+ctrl+quotedbl" → "~⇧ ⌃ ""
-options.js:250 🎯 Mapping key: "ctrl+meta+minus" → action: {type: 'insert', text: '‑'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+meta+minus", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ⌘ -"
-options.js:253 🎨 Display key: "ctrl+meta+minus" → "⌃ ⌘ -"
-options.js:250 🎯 Mapping key: "ctrl+shift+l" → action: {type: 'insert', text: '‌'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+shift+l", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ⇧ L"
-options.js:253 🎨 Display key: "ctrl+shift+l" → "⌃ ⇧ L"
-options.js:250 🎯 Mapping key: "ctrl+l" → action: {type: 'wrap', before: '\\', after: ''}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+l", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ L"
-options.js:253 🎨 Display key: "ctrl+l" → "⌃ L"
-options.js:250 🎯 Mapping key: "ctrl+insert" → action: {type: 'clipboard', action: 'copy'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+insert", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ InS"
-options.js:253 🎨 Display key: "ctrl+insert" → "⌃ InS"
-options.js:250 🎯 Mapping key: "shift+insert" → action: {type: 'clipboard', action: 'paste'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+insert", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ InS"
-options.js:253 🎨 Display key: "shift+insert" → "⇧ InS"
-options.js:250 🎯 Mapping key: "shift+delete" → action: {type: 'clipboard', action: 'cut'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+delete", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ ⌦"
-options.js:253 🎨 Display key: "shift+delete" → "⇧ ⌦"
-options.js:250 🎯 Mapping key: "shift+kp_arrowright" → action: {type: 'selection', action: 'selectRight'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+kp_arrowright", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ Num →"
-options.js:253 🎨 Display key: "shift+kp_arrowright" → "⇧ Num →"
-options.js:250 🎯 Mapping key: "shift+kp_arrowleft" → action: {type: 'selection', action: 'selectLeft'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+kp_arrowleft", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ Num ←"
-options.js:253 🎨 Display key: "shift+kp_arrowleft" → "⇧ Num ←"
-options.js:250 🎯 Mapping key: "shift+meta+kp_arrowright" → action: {type: 'selection', action: 'selectWordRight'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+meta+kp_arrowright", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ ⌘ Num →"
-options.js:253 🎨 Display key: "shift+meta+kp_arrowright" → "⇧ ⌘ Num →"
-options.js:250 🎯 Mapping key: "shift+meta+kp_arrowleft" → action: {type: 'selection', action: 'selectWordLeft'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+meta+kp_arrowleft", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ ⌘ Num ←"
-options.js:253 🎨 Display key: "shift+meta+kp_arrowleft" → "⇧ ⌘ Num ←"
-options.js:250 🎯 Mapping key: "shift+kp_home" → action: {type: 'selection', action: 'selectLineStart'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+kp_home", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ Num ⤴"
-options.js:253 🎨 Display key: "shift+kp_home" → "⇧ Num ⤴"
-options.js:250 🎯 Mapping key: "shift+kp_end" → action: {type: 'selection', action: 'selectLineEnd'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+kp_end", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ Num ⤵"
-options.js:253 🎨 Display key: "shift+kp_end" → "⇧ Num ⤵"
-options.js:250 🎯 Mapping key: "shift+ctrl+kp_home" → action: {type: 'selection', action: 'selectDocumentStart'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+ctrl+kp_home", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ ⌃ Num ⤴"
-options.js:253 🎨 Display key: "shift+ctrl+kp_home" → "⇧ ⌃ Num ⤴"
-options.js:250 🎯 Mapping key: "shift+ctrl+kp_end" → action: {type: 'selection', action: 'selectDocumentEnd'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+ctrl+kp_end", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ ⌃ Num ⤵"
-options.js:253 🎨 Display key: "shift+ctrl+kp_end" → "⇧ ⌃ Num ⤵"
-options.js:250 🎯 Mapping key: "ctrl+kp_insert" → action: {type: 'clipboard', action: 'copy'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+kp_insert", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ Num InS"
-options.js:253 🎨 Display key: "ctrl+kp_insert" → "⌃ Num InS"
-options.js:250 🎯 Mapping key: "shift+kp_insert" → action: {type: 'clipboard', action: 'paste'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+kp_insert", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ Num InS"
-options.js:253 🎨 Display key: "shift+kp_insert" → "⇧ Num InS"
-options.js:250 🎯 Mapping key: "shift+kp_delete" → action: {type: 'clipboard', action: 'cut'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+kp_delete", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ Num ⌦"
-options.js:253 🎨 Display key: "shift+kp_delete" → "⇧ Num ⌦"
-options.js:250 🎯 Mapping key: "alt+delete" → action: {type: 'delete', action: 'deleteWordRight'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="alt+delete", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌥ ⌦"
-options.js:253 🎨 Display key: "alt+delete" → "⌥ ⌦"
-options.js:250 🎯 Mapping key: "alt+backspace" → action: {type: 'delete', action: 'deleteWordLeft'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="alt+backspace", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌥ ⌫"
-options.js:253 🎨 Display key: "alt+backspace" → "⌥ ⌫"
-options.js:250 🎯 Mapping key: "meta+enter" → action: {type: 'insert', text: '\n'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="meta+enter", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌘ ⏎"
-options.js:253 🎨 Display key: "meta+enter" → "⌘ ⏎"
-options.js:250 🎯 Mapping key: "ctrl+enter" → action: {type: 'insert', text: '\n'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+enter", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ⏎"
-options.js:253 🎨 Display key: "ctrl+enter" → "⌃ ⏎"
-options.js:250 🎯 Mapping key: "ctrl+shift+enter" → action: {type: 'insert', text: '\\\\\n'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+shift+enter", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ⇧ ⏎"
-options.js:253 🎨 Display key: "ctrl+shift+enter" → "⌃ ⇧ ⏎"
-options.js:250 🎯 Mapping key: "nobreakspace" → action: {type: 'insert', text: ' '}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="nobreakspace", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "NoBreak␣"
-options.js:253 🎨 Display key: "nobreakspace" → "NoBreak␣"
-options.js:250 🎯 Mapping key: "ctrl+alt+space" → action: {type: 'insert', text: ' '}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+alt+space", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ⌥ ␣"
-options.js:253 🎨 Display key: "ctrl+alt+space" → "⌃ ⌥ ␣"
-options.js:250 🎯 Mapping key: "shift+alt+space" → action: {type: 'insert', text: ' '}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="shift+alt+space", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⇧ ⌥ ␣"
-options.js:253 🎨 Display key: "shift+alt+space" → "⇧ ⌥ ␣"
-options.js:250 🎯 Mapping key: "ctrl+~shift+slash" → action: {type: 'insert', text: '/'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+~shift+slash", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ~⇧ /"
-options.js:253 🎨 Display key: "ctrl+~shift+slash" → "⌃ ~⇧ /"
-options.js:250 🎯 Mapping key: "ctrl+period" → action: {type: 'insert', text: '. '}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="ctrl+period", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌃ ."
-options.js:253 🎨 Display key: "ctrl+period" → "⌃ ."
-options.js:250 🎯 Mapping key: "meta+period" → action: {type: 'insert', text: '…'}
-options.js:251 🔧 Mac mapping preference for display: meta
-options.js:273 🎨 formatKeyForDisplay: key="meta+period", isMac=true, macMMapping=meta
-options.js:322 🎨 formatKeyForDisplay result: "⌘ ."
-options.js:253 🎨 Display key: "meta+period" → "⌘ ."
+🏗️ LyX Background: Initializing...
+config-manager.js:125 LyX Extension: Loading default mappings from mac.bind
+173lyx-parser.js:236 🔧 LyX Parser: Mac M- mapping to Ctrl (mapMetaToCtrl=true)
+background.js:37 ✅ LyX Background: Initialization completed successfully
+test.js:20 🧪 LyX Extension Test Suite: Environment ready
+test.js:357 🧪 LyX Extension Test Suite: Ready with 7 tests
+test.js:361 🧪 Auto-running tests...
+test.js:104 🧪 Running all tests...
+test.js:117 ❌ Extension Initialization: FAILED - Error: Extension not initialized
+    at test.js:149:16
+    at new Promise (<anonymous>)
+    at RefactoredExtensionTester.testExtensionInitialization (test.js:147:12)
+    at test.js:349:57
+    at RefactoredExtensionTester.runAllTests (test.js:112:30)
+    at test.js:362:12
+runAllTests @ test.js:117Understand this error
+test.js:117 ❌ EventManager Presence: FAILED - Error: EventManager not available
+    at test.js:166:16
+    at new Promise (<anonymous>)
+    at RefactoredExtensionTester.testEventManagerPresence (test.js:164:12)
+    at test.js:350:54
+    at RefactoredExtensionTester.runAllTests (test.js:112:30)
+runAllTests @ test.js:117Understand this error
+test.js:117 ❌ Element Detection: FAILED - Error: Extension not available
+    at test.js:193:18
+runAllTests @ test.js:117Understand this error
+test.js:117 ❌ Basic Hotkey (Ctrl+M): FAILED - Error: Expected '$$', got ''
+    at test.js:234:18
+runAllTests @ test.js:117Understand this error
+test.js:117 ❌ Sequence Hotkey (Ctrl+L A): FAILED - Error: Expected '\alpha', got ''
+    at test.js:277:20
+runAllTests @ test.js:117Understand this error
+test.js:114 ✅ Configuration Load: PASSED
+test.js:117 ❌ ContentEditable Support: FAILED - Error: Expected '****', got ''
+    at test.js:340:18
+runAllTests @ test.js:117Understand this error
+test.js:104 🧪 Running all tests...
+test.js:117 ❌ Extension Initialization: FAILED - Error: Extension not initialized
+    at test.js:149:16
+    at new Promise (<anonymous>)
+    at RefactoredExtensionTester.testExtensionInitialization (test.js:147:12)
+    at test.js:349:57
+    at RefactoredExtensionTester.runAllTests (test.js:112:30)
+    at HTMLButtonElement.<anonymous> (test.js:95:12)
+runAllTests @ test.js:117Understand this error
+test.js:117 ❌ EventManager Presence: FAILED - Error: EventManager not available
+    at test.js:166:16
+    at new Promise (<anonymous>)
+    at RefactoredExtensionTester.testEventManagerPresence (test.js:164:12)
+    at test.js:350:54
+    at RefactoredExtensionTester.runAllTests (test.js:112:30)
+runAllTests @ test.js:117Understand this error
+test.js:117 ❌ Element Detection: FAILED - Error: Extension not available
+    at test.js:193:18
+runAllTests @ test.js:117Understand this error
+test.js:117 ❌ Basic Hotkey (Ctrl+M): FAILED - Error: Expected '$$', got ''
+    at test.js:234:18
+runAllTests @ test.js:117Understand this error
+test.js:117 ❌ Sequence Hotkey (Ctrl+L A): FAILED - Error: Expected '\alpha', got ''
+    at test.js:277:20
+runAllTests @ test.js:117Understand this error
+test.js:114 ✅ Configuration Load: PASSED
+test.js:117 ❌ ContentEditable Support: FAILED - Error: Expected '****', got ''
+    at test.js:340:18
+runAllTests @ test.js:117Understand this error

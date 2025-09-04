@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Module Test</title>
+</head>
+<body>
+    <h1>Module Instantiation Test</h1>
+    <div id="output"></div>
+    
+    <script src="core/event-manager.js"></script>
+    <script src="lyx-parser.js"></script>
+    <script src="core/config-manager.js"></script>
+    <script src="core/element-detector.js"></script>
+    <script src="core/key-sequence-handler.js"></script>
+    <script src="core/action-executor.js"></script>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function test() {
+            try {
+                output.innerHTML += '<p>Testing EventManager...</p>';
+                const eventManager = new EventManager();
+                output.innerHTML += '<p>✅ EventManager created</p>';
+                
+                output.innerHTML += '<p>Testing ConfigurationManager...</p>';
+                const configManager = new ConfigurationManager(eventManager);
+                output.innerHTML += '<p>✅ ConfigurationManager created</p>';
+                
+                output.innerHTML += '<p>Testing ElementDetector...</p>';
+                const elementDetector = new ElementDetector(eventManager);
+                output.innerHTML += '<p>✅ ElementDetector created</p>';
+                
+                output.innerHTML += '<p>Testing KeySequenceHandler...</p>';
+                const keySequenceHandler = new KeySequenceHandler(eventManager);
+                output.innerHTML += '<p>✅ KeySequenceHandler created</p>';
+                
+                output.innerHTML += '<p>Testing ActionExecutor...</p>';
+                const actionExecutor = new ActionExecutor(eventManager);
+                output.innerHTML += '<p>✅ ActionExecutor created</p>';
+                
+                output.innerHTML += '<p><strong>🎉 All modules loaded successfully!</strong></p>';
+                
+            } catch (error) {
+                output.innerHTML += `<p style="color: red;">❌ Error: ${error.message}</p>`;
+                console.error('Module test error:', error);
+            }
+        }
+        
+        // Run test when page loads
+        window.onload = test;
+    </script>
+</body>
+</html>
