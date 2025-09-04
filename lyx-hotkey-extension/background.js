@@ -1,146 +1,164 @@
 /**
  * Background Script for LyX Hotkey Extension
- * Handles extension state and communication between components
+ * Refactored to use modular architecture with centralized state and message handling
  */
 
-// Extension state
-let extensionEnabled = true;
-let hotkeyMappings = new Map();
+// Import required modules
+importScripts('utils/logger.js');
+importScripts('core/state-manager.js');
+importScripts('core/message-handler.js');
+importScripts('lyx-parser.js');
 
-// Initialize extension
+// Initialize logger for background context
+const logger = LyXLogger.getLogger('Background');
+
+// Global instances
+let stateManager;
+let messageHandler;
+
+/**
+ * Initialize extension on install
+ */
 chrome.runtime.onInstalled.addListener(async () => {
-  // Load default LyX-style shortcuts
-  const defaultMappings = await loadDefaultMappings();
+  logger.info('Extension installed, initializing...');
   
-  // Set default state
-  await chrome.storage.local.set({ 
-    enabled: true,
-    hotkeyMappings: defaultMappings,
-    config: ''
-  });
-  
-  hotkeyMappings = new Map(Object.entries(defaultMappings));
-});
-
-// Handle extension startup
-chrome.runtime.onStartup.addListener(async () => {
-  const result = await chrome.storage.local.get(['enabled', 'hotkeyMappings']);
-  extensionEnabled = result.enabled ?? true;
-  
-  if (result.hotkeyMappings && Object.keys(result.hotkeyMappings).length > 0) {
-    hotkeyMappings = new Map(Object.entries(result.hotkeyMappings));
-  } else {
-    // If no mappings, load defaults
-    const defaultMappings = await loadDefaultMappings();
-    hotkeyMappings = new Map(Object.entries(defaultMappings));
-    await chrome.storage.local.set({ hotkeyMappings: defaultMappings });
-  }
-});
-
-// Listen for messages from content scripts and popup
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   try {
-    switch (request.action) {
-      case 'getState':
-        sendResponse({
-          enabled: extensionEnabled,
-          mappings: Object.fromEntries(hotkeyMappings)
-        });
-        break;
-        
-      case 'toggleExtension':
-        extensionEnabled = !extensionEnabled;
-        chrome.storage.local.set({ enabled: extensionEnabled });
-        
-        // Notify all tabs
-        chrome.tabs.query({}, (tabs) => {
-          tabs.forEach(tab => {
-            chrome.tabs.sendMessage(tab.id, {
-              action: 'extensionToggled',
-              enabled: extensionEnabled
-            }).catch(() => {}); // Ignore errors for tabs that can't receive messages
-          });
-        });
-        
-        sendResponse({ enabled: extensionEnabled });
-        break;
-        
-      case 'updateMappings':
-        if (request.mappings && typeof request.mappings === 'object') {
-          hotkeyMappings = new Map(Object.entries(request.mappings));
-          chrome.storage.local.set({ 
-            hotkeyMappings: request.mappings 
-          });
-          
-          // Notify all tabs
-          chrome.tabs.query({}, (tabs) => {
-            tabs.forEach(tab => {
-              chrome.tabs.sendMessage(tab.id, {
-                action: 'mappingsUpdated',
-                mappings: request.mappings
-              }).catch(() => {});
-            });
-          });
-          
-          sendResponse({ success: true });
-        } else {
-          console.error('Invalid mappings provided:', request.mappings);
-          sendResponse({ success: false, error: 'Invalid mappings' });
-        }
-        break;
-        
-      case 'loadConfig':
-        loadConfigFromText(request.configText);
-        sendResponse({ success: true });
-        break;
-        
-      case 'updateSequenceTimeout':
-        // Notify all tabs about sequence timeout change
-        chrome.tabs.query({}, (tabs) => {
-          tabs.forEach(tab => {
-            chrome.tabs.sendMessage(tab.id, {
-              action: 'sequenceTimeoutUpdated',
-              timeout: request.timeout
-            }).catch(() => {});
-          });
-        });
-        sendResponse({ success: true });
-        break;
-        
-      default:
-        console.warn('Unknown action:', request.action);
-        sendResponse({ success: false, error: 'Unknown action' });
+    // Initialize state manager
+    stateManager = LyXStateManager.getStateManager();
+    await stateManager.initialize();
+    
+    // Load default mappings if none exist
+    const currentMappings = stateManager.getMappings();
+    if (currentMappings.size === 0) {
+      const defaultMappings = await loadDefaultMappings();
+      await stateManager.setMappings(defaultMappings);
+      logger.info(`Loaded ${Object.keys(defaultMappings).length} default mappings`);
     }
+    
+    // Initialize message handler
+    messageHandler = LyXMessageHandler.initializeMessageHandler(stateManager);
+    
+    // Register custom message handlers
+    registerCustomHandlers();
+    
+    logger.info('Extension initialization complete');
+    
   } catch (error) {
-    console.error('Error handling message:', error, request);
-    sendResponse({ success: false, error: error.message });
+    logger.error('Failed to initialize extension:', error);
   }
-  
-  return true; // Keep message channel open for async response
 });
 
-// Handle tab updates to inject content script
+/**
+ * Handle extension startup
+ */
+chrome.runtime.onStartup.addListener(async () => {
+  logger.info('Extension starting up...');
+  
+  try {
+    // Re-initialize state manager
+    stateManager = LyXStateManager.getStateManager();
+    await stateManager.initialize();
+    
+    // Re-initialize message handler
+    messageHandler = LyXMessageHandler.initializeMessageHandler(stateManager);
+    
+    // Register custom handlers
+    registerCustomHandlers();
+    
+    logger.info('Extension startup complete');
+    
+  } catch (error) {
+    logger.error('Failed to start extension:', error);
+  }
+});
+
+/**
+ * Handle tab updates to sync state with new tabs
+ */
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url && 
       (tab.url.startsWith('http') || tab.url.startsWith('https'))) {
     
-    // Send current state to the tab
-    chrome.tabs.sendMessage(tabId, {
-      action: 'extensionToggled',
-      enabled: extensionEnabled
-    }).catch(() => {}); // Ignore errors
-    
-    chrome.tabs.sendMessage(tabId, {
-      action: 'mappingsUpdated',
-      mappings: Object.fromEntries(hotkeyMappings)
-    }).catch(() => {});
+    if (stateManager && messageHandler) {
+      // Send current state to the tab
+      const state = stateManager.getState();
+      
+      messageHandler.sendToTab(tabId, {
+        action: 'extensionToggled',
+        enabled: state.enabled
+      });
+      
+      messageHandler.sendToTab(tabId, {
+        action: 'mappingsUpdated',
+        mappings: state.mappings
+      });
+      
+      logger.debug(`State synced to tab ${tabId}`);
+    }
   }
 });
+
+/**
+ * Register custom message handlers specific to background script
+ */
+function registerCustomHandlers() {
+  // Handler for loading configuration from text
+  messageHandler.registerHandler('loadConfig', async (request) => {
+    if (!request.configText) {
+      throw new Error('No config text provided');
+    }
+    
+    try {
+      const parser = new LyXConfigParser();
+      const mappings = parser.parse(request.configText);
+      
+      // Update state with parsed mappings
+      await stateManager.setMappings(mappings);
+      await stateManager.setConfig(request.configText);
+      
+      logger.info(`Configuration loaded: ${mappings.size} mappings`);
+      
+      return { success: true, mappingCount: mappings.size };
+      
+    } catch (error) {
+      logger.error('Failed to parse configuration:', error);
+      throw new Error(`Configuration parsing failed: ${error.message}`);
+    }
+  });
+  
+  // Handler for getting debug logs
+  messageHandler.registerHandler('getLogs', async () => {
+    const logs = logger.getLogs();
+    return { success: true, logs };
+  });
+  
+  // Handler for clearing debug logs
+  messageHandler.registerHandler('clearLogs', async () => {
+    logger.clearLogs();
+    return { success: true };
+  });
+  
+  // Handler for updating log level
+  messageHandler.registerHandler('updateLogLevel', async (request) => {
+    if (typeof request.level !== 'number') {
+      throw new Error('Invalid log level');
+    }
+    
+    logger.setLevel(request.level);
+    await stateManager.setLoggerConfig({ level: request.level });
+    
+    logger.info(`Log level updated to: ${request.level}`);
+    
+    return { success: true };
+  });
+}
 
 /**
  * Load default LyX-style key mappings
  */
 async function loadDefaultMappings() {
+  logger.debug('Loading default mappings...');
+  
   const defaultMappings = {
     // Math mode
     'ctrl+m': { type: 'wrap', before: '$', after: '$' },
@@ -186,41 +204,9 @@ async function loadDefaultMappings() {
     'meta+period': { type: 'insert', text: '…' }
   };
   
+  logger.debug(`Default mappings loaded: ${Object.keys(defaultMappings).length} entries`);
   return defaultMappings;
 }
 
-/**
- * Load configuration from LyX .bind file text
- */
-async function loadConfigFromText(configText) {
-  try {
-    // Import the parser (we'll need to inject it into the background context)
-    const parser = new LyXConfigParser();
-    const mappings = parser.parse(configText);
-    
-    // Convert Map to object for storage
-    const mappingsObj = Object.fromEntries(mappings);
-    
-    hotkeyMappings = mappings;
-    await chrome.storage.local.set({ 
-      hotkeyMappings: mappingsObj,
-      config: configText
-    });
-    
-    // Notify all tabs
-    chrome.tabs.query({}, (tabs) => {
-      tabs.forEach(tab => {
-        chrome.tabs.sendMessage(tab.id, {
-          action: 'mappingsUpdated',
-          mappings: mappingsObj
-        }).catch(() => {});
-      });
-    });
-    
-  } catch (error) {
-    console.error('Failed to parse LyX config:', error);
-  }
-}
-
-// We need to import the parser into the background script context
-importScripts('lyx-parser.js');
+// Legacy function for compatibility - now handled by message handlers and state manager
+// This function is kept for any remaining references but functionality moved to loadConfig handler
