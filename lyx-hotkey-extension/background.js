@@ -10,9 +10,34 @@ importScripts('core/message-handler.js');
 importScripts('lyx-parser.js');
 
 // Initialize logger for background context
-const logger = LyXLogger.getLogger('Background');
+function getLoggerModule() {
+  if (typeof LyXLogger !== 'undefined') return LyXLogger;
+  if (typeof self !== 'undefined' && self.LyXLogger) return self.LyXLogger;
+  // Fallback logger
+  return {
+    getLogger: () => ({ info: console.log, error: console.error, debug: console.log, warn: console.warn })
+  };
+}
+const logger = getLoggerModule().getLogger('Background');
 
-// Global instances
+// Helper functions to get modules in both browser and service worker contexts
+function getStateManagerModule() {
+  if (typeof LyXStateManager !== 'undefined') return LyXStateManager;
+  if (typeof self !== 'undefined' && self.LyXStateManager) return self.LyXStateManager;
+  throw new Error('LyXStateManager not available');
+}
+
+function getMessageHandlerModule() {
+  if (typeof LyXMessageHandler !== 'undefined') return LyXMessageHandler;
+  if (typeof self !== 'undefined' && self.LyXMessageHandler) return self.LyXMessageHandler;
+  throw new Error('LyXMessageHandler not available');
+}
+
+function getConfigParserModule() {
+  if (typeof LyXConfigParser !== 'undefined') return LyXConfigParser;
+  if (typeof self !== 'undefined' && self.LyXConfigParser) return self.LyXConfigParser;
+  throw new Error('LyXConfigParser not available');
+}
 let stateManager;
 let messageHandler;
 
@@ -24,7 +49,7 @@ chrome.runtime.onInstalled.addListener(async () => {
   
   try {
     // Initialize state manager
-    stateManager = LyXStateManager.getStateManager();
+    stateManager = getStateManagerModule().getStateManager();
     await stateManager.initialize();
     
     // Load default mappings if none exist
@@ -36,7 +61,7 @@ chrome.runtime.onInstalled.addListener(async () => {
     }
     
     // Initialize message handler
-    messageHandler = LyXMessageHandler.initializeMessageHandler(stateManager);
+    messageHandler = getMessageHandlerModule().initializeMessageHandler(stateManager);
     
     // Register custom message handlers
     registerCustomHandlers();
@@ -56,11 +81,11 @@ chrome.runtime.onStartup.addListener(async () => {
   
   try {
     // Re-initialize state manager
-    stateManager = LyXStateManager.getStateManager();
+    stateManager = getStateManagerModule().getStateManager();
     await stateManager.initialize();
     
     // Re-initialize message handler
-    messageHandler = LyXMessageHandler.initializeMessageHandler(stateManager);
+    messageHandler = getMessageHandlerModule().initializeMessageHandler(stateManager);
     
     // Register custom handlers
     registerCustomHandlers();
@@ -109,7 +134,7 @@ function registerCustomHandlers() {
     }
     
     try {
-      const parser = new LyXConfigParser();
+      const parser = new (getConfigParserModule())();
       const mappings = parser.parse(request.configText);
       
       // Update state with parsed mappings

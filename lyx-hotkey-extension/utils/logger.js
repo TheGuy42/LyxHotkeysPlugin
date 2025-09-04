@@ -326,4 +326,15 @@ if (typeof module !== 'undefined' && module.exports) {
     saveLoggerConfig,
     LOG_LEVELS
   };
+} else if (typeof self !== 'undefined') {
+  // Service worker global
+  self.LyXLogger = {
+    Logger,
+    getLogger,
+    configureLogger,
+    setLogLevel,
+    loadLoggerConfig,
+    saveLoggerConfig,
+    LOG_LEVELS
+  };
 }

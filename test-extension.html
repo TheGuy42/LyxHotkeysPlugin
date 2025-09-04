@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LyX Hotkeys Extension - Manual Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-area { background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 5px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 3px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        textarea, input { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 3px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 3px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .key-log { background: white; border: 1px solid #ddd; padding: 10px; height: 200px; overflow-y: auto; margin: 10px 0; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🎹 LyX Hotkeys Extension - Manual Test</h1>
+    
+    <div class="status" id="extensionStatus">
+        <strong>Extension Status:</strong> <span id="statusText">Checking...</span>
+    </div>
+    
+    <div class="test-area">
+        <h2>📋 Pre-Loading Checks</h2>
+        <div id="preChecks">
+            <p>✅ This page will test if the extension loads without JavaScript errors</p>
+            <p>✅ Open Chrome Developer Tools (F12) to check for console errors</p>
+            <p>✅ Look for red errors mentioning "logger" or "identifier"</p>
+        </div>
+    </div>
+    
+    <div class="test-area">
+        <h2>🔧 Extension Loading Test</h2>
+        <button onclick="testExtensionLoading()">Test Extension Loading</button>
+        <div id="loadingResults"></div>
+    </div>
+    
+    <div class="test-area">
+        <h2>⌨️ Hotkey Testing Area</h2>
+        <p>Try these common LyX hotkeys in the text areas below:</p>
+        <ul>
+            <li><strong>Ctrl+M</strong> - Should insert math mode symbols</li>
+            <li><strong>Alt+G</strong> - Should insert Greek alpha (α)</li>
+            <li><strong>Alt+P</strong> - Should insert pi (π)</li>
+            <li><strong>Ctrl+B</strong> - Should make text bold</li>
+        </ul>
+        
+        <h3>Test Input Field:</h3>
+        <input type="text" id="testInput" placeholder="Type here and try hotkeys..." />
+        
+        <h3>Test Text Area:</h3>
+        <textarea id="testArea" rows="4" placeholder="Type here and try hotkeys..."></textarea>
+        
+        <h3>Key Event Log:</h3>
+        <div class="key-log" id="keyLog">Key events will appear here...</div>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <div class="test-area">
+        <h2>🚀 Instructions for Chrome Extension Testing</h2>
+        <ol>
+            <li><strong>Load the extension:</strong>
+                <ol>
+                    <li>Open Chrome and go to <code>chrome://extensions/</code></li>
+                    <li>Enable "Developer mode" (toggle in top right)</li>
+                    <li>Click "Load unpacked"</li>
+                    <li>Select the <code>lyx-hotkey-extension</code> folder</li>
+                </ol>
+            </li>
+            <li><strong>Check for errors:</strong>
+                <ol>
+                    <li>Look for any red error messages on the extensions page</li>
+                    <li>Check Chrome Developer Tools console (F12) for JavaScript errors</li>
+                    <li>Errors should NOT mention "logger already declared" or similar</li>
+                </ol>
+            </li>
+            <li><strong>Test functionality:</strong>
+                <ol>
+                    <li>Try typing in the input fields above</li>
+                    <li>Use the hotkey combinations listed</li>
+                    <li>Check if the extension responds to key presses</li>
+                </ol>
+            </li>
+        </ol>
+    </div>
+
+    <script>
+        let keyEventCount = 0;
+        
+        // Set up key event logging
+        function setupKeyLogging() {
+            const testInput = document.getElementById('testInput');
+            const testArea = document.getElementById('testArea');
+            const keyLog = document.getElementById('keyLog');
+            
+            function logKeyEvent(event, source) {
+                keyEventCount++;
+                const timestamp = new Date().toLocaleTimeString();
+                const keyInfo = {
+                    key: event.key,
+                    code: event.code,
+                    ctrl: event.ctrlKey,
+                    alt: event.altKey,
+                    shift: event.shiftKey,
+                    meta: event.metaKey
+                };
+                
+                const logEntry = document.createElement('div');
+                logEntry.innerHTML = `<strong>${timestamp}</strong> [${source}] ${JSON.stringify(keyInfo)}`;
+                keyLog.appendChild(logEntry);
+                keyLog.scrollTop = keyLog.scrollHeight;
+            }
+            
+            testInput.addEventListener('keydown', (e) => logKeyEvent(e, 'INPUT'));
+            testArea.addEventListener('keydown', (e) => logKeyEvent(e, 'TEXTAREA'));
+        }
+        
+        function clearLog() {
+            document.getElementById('keyLog').innerHTML = 'Key events will appear here...';
+            keyEventCount = 0;
+        }
+        
+        function testExtensionLoading() {
+            const resultsDiv = document.getElementById('loadingResults');
+            resultsDiv.innerHTML = '<p>Testing extension loading...</p>';
+            
+            // Test if Chrome extension API is available
+            if (typeof chrome === 'undefined' || !chrome.runtime) {
+                resultsDiv.innerHTML = '<div class="status error">❌ Chrome extension API not available. Make sure you\'re testing this in a Chrome extension context.</div>';
+                return;
+            }
+            
+            // Test extension communication
+            try {
+                chrome.runtime.sendMessage({ action: 'getState' }, (response) => {
+                    if (chrome.runtime.lastError) {
+                        resultsDiv.innerHTML = `<div class="status error">❌ Extension communication failed: ${chrome.runtime.lastError.message}</div>`;
+                    } else {
+                        resultsDiv.innerHTML = `<div class="status success">✅ Extension loaded successfully! Response: ${JSON.stringify(response)}</div>`;
+                        updateExtensionStatus('✅ Extension Active', 'success');
+                    }
+                });
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="status error">❌ Extension test failed: ${error.message}</div>`;
+            }
+        }
+        
+        function updateExtensionStatus(text, type) {
+            const statusDiv = document.getElementById('extensionStatus');
+            const statusText = document.getElementById('statusText');
+            statusText.textContent = text;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupKeyLogging();
+            
+            // Check initial extension state
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                updateExtensionStatus('Chrome extension API available', 'warning');
+            } else {
+                updateExtensionStatus('❌ Not in extension context', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
